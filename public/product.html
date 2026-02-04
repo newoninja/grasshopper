@@ -12,7 +12,7 @@
 <body class="shop-page">
     <nav class="nav nav-light">
         <div class="nav-container">
-            <a href="index.html" class="nav-logo">the grasshopper</a>
+            <a href="index.html" class="nav-logo">The Grasshopper</a>
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="shop.html" class="nav-link">Shop</a>
@@ -52,9 +52,25 @@
                 <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
                 <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
             </div>
-            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+            <button class="pickup-check-btn" onclick="openPickupModal()" id="pickupCheckBtn">Check Local Pickup</button>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout with Shipping</button>
         </div>
     </aside>
+
+    <div class="pickup-overlay" onclick="closePickupModal()"></div>
+    <div class="pickup-modal">
+        <div class="pickup-content">
+            <button class="pickup-close" onclick="closePickupModal()">&times;</button>
+            <h2>Local Pickup</h2>
+            <p class="pickup-description">Check if you're in our local pickup area and save on shipping!</p>
+            <div class="pickup-form">
+                <input type="text" id="pickupZip" class="pickup-zip-input"
+                       placeholder="Enter your zip code" maxlength="5" />
+                <button class="pickup-submit-btn" onclick="checkPickupEligibility()">Check Availability</button>
+            </div>
+            <div id="pickupResult" class="pickup-result"></div>
+        </div>
+    </div>
 
     <main class="product-page">
         <div class="product-container" id="productContainer">
@@ -64,8 +80,8 @@
 
     <footer class="footer footer-light">
         <div class="footer-content">
-            <span class="footer-logo">the grasshopper</span>
-            <p>&copy; 2024 The Grasshopper. All rights reserved.</p>
+            <span class="footer-logo">The Grasshopper</span>
+            <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
         </div>
     </footer>
 

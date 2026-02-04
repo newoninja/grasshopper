@@ -207,3 +207,265 @@ img { max-width: 100%; height: auto; display: block; }
     .about-content { grid-template-columns: 1fr; gap: 2rem; }
     .cart-sidebar { max-width: 100%; }
 }
+
+/* Pickup Modal */
+.pickup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(107, 91, 122, 0.85);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.pickup-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.pickup-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    z-index: 3001;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.pickup-modal.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.pickup-content {
+    padding: 2.5rem;
+    position: relative;
+}
+
+.pickup-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: var(--gray-600);
+    opacity: 0.6;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.pickup-close:hover {
+    opacity: 1;
+    background: var(--lavender-pale);
+}
+
+.pickup-modal h2 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--lavender-deep);
+}
+
+.pickup-description {
+    color: var(--gray-600);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.pickup-form {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.pickup-zip-input {
+    flex: 1;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.pickup-zip-input:focus {
+    border-color: var(--lavender-mid);
+}
+
+.pickup-submit-btn {
+    padding: 0.875rem 1.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--lavender-deep);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.pickup-submit-btn:hover {
+    background: var(--lavender-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 91, 122, 0.3);
+}
+
+.pickup-result {
+    min-height: 60px;
+}
+
+.pickup-checking {
+    text-align: center;
+    color: var(--gray-600);
+    font-style: italic;
+}
+
+.pickup-error {
+    padding: 1rem;
+    background: #FEE;
+    border-left: 3px solid #E53;
+    color: #C33;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.pickup-eligible {
+    padding: 1.5rem;
+    background: var(--lavender-whisper);
+    border-radius: 12px;
+    border: 2px solid var(--lavender-soft);
+}
+
+.pickup-eligible h4 {
+    color: var(--lavender-deep);
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+}
+
+.pickup-eligible p {
+    color: var(--gray-600);
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+}
+
+.pickup-phone-input {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    outline: none;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+}
+
+.pickup-phone-input:focus {
+    border-color: var(--lavender-mid);
+}
+
+.confirm-pickup-btn {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--lavender-deep);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.confirm-pickup-btn:hover {
+    background: var(--lavender-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 91, 122, 0.3);
+}
+
+.pickup-cancel-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    background: transparent;
+    border-radius: 8px;
+}
+
+.pickup-cancel-btn:hover {
+    background: var(--gray-100);
+}
+
+.pickup-not-eligible {
+    padding: 1.5rem;
+    background: var(--gray-100);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.pickup-not-eligible h4 {
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+    font-size: 1.125rem;
+}
+
+.pickup-not-eligible p {
+    color: var(--gray-600);
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+}
+
+.pickup-ok-btn {
+    padding: 0.875rem 1.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--lavender-deep);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.pickup-ok-btn:hover {
+    background: var(--lavender-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107, 91, 122, 0.3);
+}
+
+.pickup-check-btn {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--lavender-deep);
+    background: var(--lavender-pale);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+}
+
+.pickup-check-btn:hover {
+    background: var(--lavender-soft);
+    transform: translateY(-1px);
+}
+
+.checkout-btn {
+    font-size: 0.85rem !important;
+}

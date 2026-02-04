@@ -12,7 +12,7 @@
 <body>
     <nav class="nav">
         <div class="nav-container">
-            <a href="index.html" class="nav-logo">the grasshopper</a>
+            <a href="index.html" class="nav-logo">The Grasshopper</a>
             <div class="nav-links">
                 <a href="index.html" class="nav-link active">Home</a>
                 <a href="shop.html" class="nav-link">Shop</a>
@@ -52,9 +52,25 @@
                 <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
                 <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
             </div>
-            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+            <button class="pickup-check-btn" onclick="openPickupModal()" id="pickupCheckBtn">Check Local Pickup</button>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout with Shipping</button>
         </div>
     </aside>
+
+    <div class="pickup-overlay" onclick="closePickupModal()"></div>
+    <div class="pickup-modal">
+        <div class="pickup-content">
+            <button class="pickup-close" onclick="closePickupModal()">&times;</button>
+            <h2>Local Pickup</h2>
+            <p class="pickup-description">Check if you're in our local pickup area and save on shipping!</p>
+            <div class="pickup-form">
+                <input type="text" id="pickupZip" class="pickup-zip-input"
+                       placeholder="Enter your zip code" maxlength="5" />
+                <button class="pickup-submit-btn" onclick="checkPickupEligibility()">Check Availability</button>
+            </div>
+            <div id="pickupResult" class="pickup-result"></div>
+        </div>
+    </div>
 
     <section class="hero">
         <div class="hero-content">
@@ -75,7 +91,7 @@
     </section>
 
     <section class="salon-section">
-        <h2 class="salon-title">the grasshopper</h2>
+        <h2 class="salon-title">The Grasshopper</h2>
         <div class="salon-image"><img src="site-photo.png" alt="The Grasshopper Salon"></div>
     </section>
 
@@ -99,8 +115,8 @@
 
     <footer class="footer">
         <div class="footer-content">
-            <span class="footer-logo">the grasshopper</span>
-            <p>&copy; 2024 The Grasshopper. All rights reserved.</p>
+            <span class="footer-logo">The Grasshopper</span>
+            <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
         </div>
     </footer>
 

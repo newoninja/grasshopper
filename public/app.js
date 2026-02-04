@@ -1,9 +1,11 @@
 // ============================================
-// THE GRASSHOPPER - Main Application
+// The Grasshopper - Main Application
 // ============================================
 
 let cart = JSON.parse(localStorage.getItem('grasshopper-cart')) || [];
 let allProducts = [];
+let pickupEligible = false;
+let pickupPhone = '';
 
 // ============================================
 // API Functions
@@ -30,6 +32,89 @@ async function searchProducts(query) {
     const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error('Failed to search');
     return await response.json();
+}
+
+async function checkPickupEligibility() {
+    const zipCode = document.getElementById('pickupZip').value.trim();
+    const resultDiv = document.getElementById('pickupResult');
+
+    if (!zipCode || zipCode.length !== 5) {
+        resultDiv.innerHTML = '<p class="pickup-error">Please enter a valid 5-digit zip code</p>';
+        return;
+    }
+
+    resultDiv.innerHTML = '<p class="pickup-checking">Checking...</p>';
+
+    try {
+        const response = await fetch('/api/check-pickup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ zipCode })
+        });
+
+        const data = await response.json();
+
+        if (data.eligible) {
+            pickupEligible = true;
+            resultDiv.innerHTML = `
+                <div class="pickup-eligible">
+                    <h4>✓ Great news! Local pickup is available</h4>
+                    <p>Please provide your phone number and we'll contact you within 24 hours to arrange pickup.</p>
+                    <input type="tel" id="pickupPhoneInput" class="pickup-phone-input"
+                           placeholder="(555) 123-4567" maxlength="14" />
+                    <button class="confirm-pickup-btn" onclick="confirmPickup()">Confirm Pickup Order</button>
+                    <button class="pickup-cancel-btn" onclick="closePickupModal()">Cancel</button>
+                </div>
+            `;
+        } else {
+            pickupEligible = false;
+            resultDiv.innerHTML = `
+                <div class="pickup-not-eligible">
+                    <h4>Sorry, you're outside our pickup area</h4>
+                    <p>We offer shipping to your location. Click checkout to proceed with delivery.</p>
+                    <button class="pickup-ok-btn" onclick="closePickupModal(); createCheckout();">Proceed to Checkout</button>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error checking pickup:', error);
+        resultDiv.innerHTML = '<p class="pickup-error">Unable to check eligibility. Please try again.</p>';
+    }
+}
+
+function confirmPickup() {
+    const phoneInput = document.getElementById('pickupPhoneInput');
+    const phone = phoneInput?.value.trim();
+
+    if (!phone || phone.length < 10) {
+        alert('Please enter a valid phone number');
+        return;
+    }
+
+    pickupPhone = phone;
+    closePickupModal();
+
+    // Show confirmation message
+    alert(`Thank you! We'll contact you at ${phone} within 24 hours to arrange pickup.`);
+
+    // Clear cart after pickup request
+    cart = [];
+    saveCart();
+    updateCartUI();
+}
+
+function openPickupModal() {
+    document.querySelector('.pickup-modal')?.classList.add('active');
+    document.querySelector('.pickup-overlay')?.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePickupModal() {
+    document.querySelector('.pickup-modal')?.classList.remove('active');
+    document.querySelector('.pickup-overlay')?.classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('pickupResult').innerHTML = '';
+    document.getElementById('pickupZip').value = '';
 }
 
 async function createCheckout() {
