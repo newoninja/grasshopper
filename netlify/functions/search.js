@@ -1,5 +1,3 @@
-const fetch = require('node-fetch');
-
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 
