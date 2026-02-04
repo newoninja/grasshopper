@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop | The Grasshopper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="shop-page">
+    <nav class="nav nav-light">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">the grasshopper</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="shop.html" class="nav-link active">Shop</a>
+            </div>
+            <div class="nav-actions">
+                <button class="search-toggle" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                <button class="cart-toggle" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-overlay">
+        <div class="search-container">
+            <button class="search-close">&times;</button>
+            <form class="search-form" onsubmit="handleSearch(event)">
+                <input type="text" class="search-input" placeholder="Search products..." id="searchInput">
+                <button type="submit" class="search-submit">Search</button>
+            </form>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <div class="cart-overlay"></div>
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="cart-line"><span>Shipping ($5/item)</span><span id="cartShipping">$0.00</span></div>
+                <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+        </div>
+    </aside>
+
+    <header class="shop-header">
+        <h1>Shop All Products</h1>
+        <p>Professional salon-quality products</p>
+    </header>
+
+    <main class="shop-main">
+        <div class="shop-layout">
+            <aside class="filter-sidebar">
+                <div class="filter-header">
+                    <h3>Brands</h3>
+                    <button class="filter-clear" id="clearFilters">Clear</button>
+                </div>
+                <div class="filter-list" id="brandFilters"></div>
+            </aside>
+            <div class="products-container">
+                <div class="products-count" id="productsCount"></div>
+                <div class="products-grid" id="productsGrid">
+                    <div class="loading-spinner"><div class="spinner"></div><p>Loading products...</p></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer footer-light">
+        <div class="footer-content">
+            <span class="footer-logo">the grasshopper</span>
+            <p>&copy; 2024 The Grasshopper. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        let shopProducts = [];
+        let selectedBrands = new Set();
+
+        function renderProducts(products) {
+            const grid = document.getElementById('productsGrid');
+            const countEl = document.getElementById('productsCount');
+            countEl.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
+            if (products.length === 0) {
+                grid.innerHTML = '<p class="no-products">No products match your selection</p>';
+                return;
+            }
+            grid.innerHTML = products.map(p => createProductCard(p, true)).join('');
+        }
+
+        function renderBrandFilters(products) {
+            const container = document.getElementById('brandFilters');
+            const brandCounts = {};
+            products.forEach(p => {
+                const brand = p.brand || 'Other';
+                brandCounts[brand] = (brandCounts[brand] || 0) + 1;
+            });
+            const brands = Object.keys(brandCounts).sort((a, b) => {
+                if (a === 'Other') return 1;
+                if (b === 'Other') return -1;
+                return a.localeCompare(b);
+            });
+            container.innerHTML = brands.map(brand => `
+                <label class="filter-item">
+                    <input type="checkbox" value="${brand}" onchange="handleBrandFilter(this)">
+                    <span class="filter-name">${brand}</span>
+                    <span class="filter-count">${brandCounts[brand]}</span>
+                </label>
+            `).join('');
+        }
+
+        function handleBrandFilter(checkbox) {
+            if (checkbox.checked) selectedBrands.add(checkbox.value);
+            else selectedBrands.delete(checkbox.value);
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filtered = shopProducts;
+            if (selectedBrands.size > 0) {
+                filtered = shopProducts.filter(p => selectedBrands.has(p.brand || 'Other'));
+            }
+            renderProducts(filtered);
+        }
+
+        function clearAllFilters() {
+            selectedBrands.clear();
+            document.querySelectorAll('#brandFilters input').forEach(cb => cb.checked = false);
+            renderProducts(shopProducts);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const grid = document.getElementById('productsGrid');
+            try {
+                shopProducts = await fetchProducts();
+                renderProducts(shopProducts);
+                renderBrandFilters(shopProducts);
+                document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
+            } catch (e) {
+                console.error('Error loading products:', e);
+                grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

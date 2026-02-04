@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product | The Grasshopper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="shop-page">
+    <nav class="nav nav-light">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">the grasshopper</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="shop.html" class="nav-link">Shop</a>
+            </div>
+            <div class="nav-actions">
+                <button class="search-toggle" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                <button class="cart-toggle" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-overlay">
+        <div class="search-container">
+            <button class="search-close">&times;</button>
+            <form class="search-form" onsubmit="handleSearch(event)">
+                <input type="text" class="search-input" placeholder="Search products..." id="searchInput">
+                <button type="submit" class="search-submit">Search</button>
+            </form>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <div class="cart-overlay"></div>
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="cart-line"><span>Shipping ($5/item)</span><span id="cartShipping">$0.00</span></div>
+                <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout</button>
+        </div>
+    </aside>
+
+    <main class="product-page">
+        <div class="product-container" id="productContainer">
+            <div class="loading-spinner"><div class="spinner"></div><p>Loading product...</p></div>
+        </div>
+    </main>
+
+    <footer class="footer footer-light">
+        <div class="footer-content">
+            <span class="footer-logo">the grasshopper</span>
+            <p>&copy; 2024 The Grasshopper. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        let currentProduct = null;
+
+        async function loadProduct() {
+            const container = document.getElementById('productContainer');
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
+
+            if (!productId) {
+                container.innerHTML = '<p class="error">Product not found. <a href="shop.html">Return to shop</a></p>';
+                return;
+            }
+
+            try {
+                currentProduct = await fetchProduct(productId);
+                document.title = `${currentProduct.name} | The Grasshopper`;
+                allProducts = [currentProduct];
+
+                container.innerHTML = `
+                    <a href="shop.html" class="back-link">← Back to Shop</a>
+                    <div class="product-detail">
+                        <div class="product-detail-image">
+                            ${currentProduct.imageUrl ? `<img src="${currentProduct.imageUrl}" alt="${currentProduct.name}">` : '<div class="product-image-placeholder">No Image</div>'}
+                        </div>
+                        <div class="product-detail-info">
+                            <p class="product-brand">${currentProduct.brand}</p>
+                            <h1 class="product-detail-name">${currentProduct.name}</h1>
+                            <p class="product-detail-price">$${currentProduct.price.toFixed(2)}</p>
+                            ${currentProduct.description ? `<div class="product-description"><h3>Description</h3><p>${currentProduct.description}</p></div>` : ''}
+                            <div class="product-actions">
+                                <button class="buy-now-btn" onclick="handleBuyNow()">Buy Now</button>
+                                <button class="add-to-cart-btn-large" onclick="addToCart('${currentProduct.id}')">Add to Cart</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = '<p class="error">Unable to load product. <a href="shop.html">Return to shop</a></p>';
+            }
+        }
+
+        async function handleBuyNow() {
+            if (!currentProduct) return;
+            const btn = document.querySelector('.buy-now-btn');
+            btn.textContent = 'Processing...';
+            btn.disabled = true;
+            await buyNow(currentProduct.variationId);
+            btn.textContent = 'Buy Now';
+            btn.disabled = false;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProduct);
+    </script>
+</body>
+</html>
