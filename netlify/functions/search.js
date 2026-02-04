@@ -6,13 +6,14 @@ const brandPatterns = [
     { pattern: /^olaplex/i, brand: 'Olaplex' },
     { pattern: /^ouai/i, brand: 'OUAI' },
     { pattern: /^living proof/i, brand: 'Living Proof' },
+    { pattern: /^cw\s/i, brand: 'Color Wow' },
 ];
 
 function extractBrand(name) {
     for (const { pattern, brand } of brandPatterns) {
         if (pattern.test(name)) return brand;
     }
-    return 'Other';
+    return 'Color Wow';
 }
 
 async function fetchAllImages() {

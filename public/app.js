@@ -183,16 +183,14 @@ function updateCartUI() {
 
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = totalItems * 5;
-    const totalPrice = subtotal + shipping;
 
     if (cartCount) {
         cartCount.textContent = totalItems;
         cartCount.classList.toggle('visible', totalItems > 0);
     }
 
-    if (cartShipping) cartShipping.textContent = totalItems > 0 ? `$${shipping.toFixed(2)}` : '$0.00';
-    if (cartTotal) cartTotal.textContent = `$${totalPrice.toFixed(2)}`;
+    if (cartShipping) cartShipping.textContent = totalItems > 0 ? 'Calculated at checkout' : '$0.00';
+    if (cartTotal) cartTotal.textContent = `$${subtotal.toFixed(2)}`;
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
 
     if (cart.length === 0) {
