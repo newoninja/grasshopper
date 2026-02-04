@@ -82,7 +82,7 @@ async function checkPickupEligibility() {
     }
 }
 
-function confirmPickup() {
+async function confirmPickup() {
     const phoneInput = document.getElementById('pickupPhoneInput');
     const phone = phoneInput?.value.trim();
 
@@ -92,15 +92,43 @@ function confirmPickup() {
     }
 
     pickupPhone = phone;
-    closePickupModal();
 
-    // Show confirmation message
-    alert(`Thank you! We'll contact you at ${phone} within 24 hours to arrange pickup.`);
+    // Show processing state
+    const confirmBtn = document.querySelector('.confirm-pickup-btn');
+    const originalText = confirmBtn.textContent;
+    confirmBtn.textContent = 'Processing...';
+    confirmBtn.disabled = true;
 
-    // Clear cart after pickup request
-    cart = [];
-    saveCart();
-    updateCartUI();
+    try {
+        const items = cart.map(item => ({
+            variationId: item.variationId,
+            quantity: item.quantity,
+            name: item.name,
+            price: item.price
+        }));
+
+        const response = await fetch('/api/checkout-pickup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items, phone })
+        });
+
+        const data = await response.json();
+
+        if (data.checkoutUrl) {
+            // Redirect to Square checkout
+            window.location.href = data.checkoutUrl;
+        } else {
+            alert('Unable to create pickup order. Please try again.');
+            confirmBtn.textContent = originalText;
+            confirmBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Pickup checkout error:', error);
+        alert('Unable to process pickup order. Please try again.');
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+    }
 }
 
 function openPickupModal() {
