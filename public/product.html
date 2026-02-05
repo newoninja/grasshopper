@@ -107,6 +107,11 @@
                 document.title = `${currentProduct.name} | The Grasshopper`;
                 allProducts = [currentProduct];
 
+                const hasVariants = currentProduct.variations && currentProduct.variations.length > 1;
+                const priceDisplay = currentProduct.priceRange
+                    ? `$${currentProduct.priceRange.min.toFixed(2)} - $${currentProduct.priceRange.max.toFixed(2)}`
+                    : `$${currentProduct.price.toFixed(2)}`;
+
                 container.innerHTML = `
                     <a href="shop.html" class="back-link">← Back to Shop</a>
                     <div class="product-detail">
@@ -116,11 +121,23 @@
                         <div class="product-detail-info">
                             <p class="product-brand">${currentProduct.brand}</p>
                             <h1 class="product-detail-name">${currentProduct.name}</h1>
-                            <p class="product-detail-price">$${currentProduct.price.toFixed(2)}</p>
+                            <p class="product-detail-price" id="productPrice">${priceDisplay}</p>
                             ${currentProduct.description ? `<div class="product-description"><h3>Description</h3><p>${currentProduct.description}</p></div>` : ''}
+                            ${hasVariants ? `
+                                <div class="product-variants">
+                                    <label for="variantSelect" class="variant-label">Select Size:</label>
+                                    <select id="variantSelect" class="variant-select" onchange="updateVariant()">
+                                        ${currentProduct.variations.map(v => `
+                                            <option value="${v.id}" data-price="${v.price}">
+                                                ${v.name} - $${v.price.toFixed(2)}
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                            ` : ''}
                             <div class="product-actions">
                                 <button class="buy-now-btn" onclick="handleBuyNow()">Buy Now</button>
-                                <button class="add-to-cart-btn-large" onclick="addToCart('${currentProduct.id}')">Add to Cart</button>
+                                <button class="add-to-cart-btn-large" onclick="handleAddToCart()">Add to Cart</button>
                             </div>
                         </div>
                     </div>
@@ -130,14 +147,35 @@
             }
         }
 
+        function updateVariant() {
+            const select = document.getElementById('variantSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            const price = parseFloat(selectedOption.dataset.price);
+            document.getElementById('productPrice').textContent = `$${price.toFixed(2)}`;
+        }
+
+        function getSelectedVariationId() {
+            const select = document.getElementById('variantSelect');
+            return select ? select.value : currentProduct.variationId;
+        }
+
         async function handleBuyNow() {
             if (!currentProduct) return;
             const btn = document.querySelector('.buy-now-btn');
             btn.textContent = 'Processing...';
             btn.disabled = true;
-            await buyNow(currentProduct.variationId);
+            await buyNow(getSelectedVariationId());
             btn.textContent = 'Buy Now';
             btn.disabled = false;
+        }
+
+        function handleAddToCart() {
+            const selectedVariation = currentProduct.variations?.find(v => v.id === getSelectedVariationId());
+            if (selectedVariation) {
+                addToCart(currentProduct.id, selectedVariation.id, selectedVariation.name, selectedVariation.price);
+            } else {
+                addToCart(currentProduct.id, currentProduct.variationId, currentProduct.name, currentProduct.price);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', loadProduct);

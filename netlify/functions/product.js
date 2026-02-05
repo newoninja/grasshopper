@@ -88,22 +88,39 @@ exports.handler = async (event) => {
             imageUrl = images[itemData.image_ids[0]];
         }
 
-        let price = 0;
-        let variationId = null;
+        // Get all variations with their prices and names
+        const variations = [];
         if (itemData.variations?.length > 0) {
-            const variation = itemData.variations[0];
-            variationId = variation.id;
-            if (variation.item_variation_data?.price_money) {
-                price = variation.item_variation_data.price_money.amount / 100;
-            }
+            itemData.variations.forEach(variation => {
+                const varData = variation.item_variation_data;
+                if (varData) {
+                    variations.push({
+                        id: variation.id,
+                        name: varData.name || 'Standard',
+                        price: varData.price_money ? varData.price_money.amount / 100 : 0,
+                        sku: varData.sku || ''
+                    });
+                }
+            });
+        }
+
+        // Get price range or single price
+        let minPrice = 0;
+        let maxPrice = 0;
+        if (variations.length > 0) {
+            const prices = variations.map(v => v.price);
+            minPrice = Math.min(...prices);
+            maxPrice = Math.max(...prices);
         }
 
         const product = {
             id: item.id,
-            variationId,
+            variationId: variations[0]?.id || null,
             name: itemData.name || '',
             description: itemData.description || '',
-            price,
+            price: minPrice,
+            priceRange: minPrice !== maxPrice ? { min: minPrice, max: maxPrice } : null,
+            variations,
             imageUrl,
             brand: extractBrand(itemData.name || '')
         };
