@@ -221,7 +221,7 @@ function createProductCard(product, fullSize = false) {
                 <a href="product.html?id=${product.id}" class="product-name-link">
                     <h3 class="product-name">${escapeHtml(product.name)}</h3>
                 </a>
-                <p class="product-price">$${product.price.toFixed(2)}</p>
+                <p class="product-price">${product.priceRange ? `$${product.priceRange.min.toFixed(2)} - $${product.priceRange.max.toFixed(2)}` : `$${product.price.toFixed(2)}`}</p>
                 <div class="product-buttons">
                     <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add to Cart</button>
                     <button class="buy-now-btn-small" onclick="event.stopPropagation(); buyNow('${product.variationId}')">Buy Now</button>

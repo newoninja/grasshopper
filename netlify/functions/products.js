@@ -123,14 +123,22 @@ exports.handler = async (event) => {
                     imageUrl = images[itemData.image_ids[0]];
                 }
 
-                let price = 0;
+                // Calculate price range for products with multiple variations
+                let minPrice = 0;
+                let maxPrice = 0;
                 let variationId = null;
+
                 if (itemData.variations?.length > 0) {
-                    const variation = itemData.variations[0];
-                    variationId = variation.id;
-                    if (variation.item_variation_data?.price_money) {
-                        price = variation.item_variation_data.price_money.amount / 100;
+                    const prices = itemData.variations
+                        .filter(v => v.item_variation_data?.price_money)
+                        .map(v => v.item_variation_data.price_money.amount / 100);
+
+                    if (prices.length > 0) {
+                        minPrice = Math.min(...prices);
+                        maxPrice = Math.max(...prices);
                     }
+
+                    variationId = itemData.variations[0].id;
                 }
 
                 return {
@@ -138,7 +146,8 @@ exports.handler = async (event) => {
                     variationId,
                     name: itemData.name || '',
                     description: itemData.description || '',
-                    price,
+                    price: minPrice,
+                    priceRange: minPrice !== maxPrice ? { min: minPrice, max: maxPrice } : null,
                     imageUrl,
                     brand: extractBrand(itemData.name || ''),
                     productType: itemData.product_type
