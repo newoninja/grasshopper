@@ -119,7 +119,9 @@ async function confirmPickup() {
             // Redirect to Square checkout
             window.location.href = data.checkoutUrl;
         } else {
-            alert('Unable to create pickup order. Please try again.');
+            const errorMsg = data.error || 'Unable to create pickup order. Please try again.';
+            console.error('Pickup checkout error:', data);
+            alert(errorMsg);
             confirmBtn.textContent = originalText;
             confirmBtn.disabled = false;
         }

@@ -69,6 +69,9 @@ exports.handler = async (event) => {
 
         const checkoutData = await checkoutResponse.json();
 
+        console.log('Square checkout response status:', checkoutResponse.status);
+        console.log('Square checkout response:', JSON.stringify(checkoutData, null, 2));
+
         if (checkoutData.payment_link) {
             // Send email notification
             try {
@@ -136,7 +139,15 @@ Order Link: ${checkoutData.payment_link.url}
             };
         } else {
             console.error('Checkout error:', checkoutData);
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Failed to create checkout' }) };
+            const errorMessage = checkoutData.errors?.[0]?.detail || checkoutData.errors?.[0]?.code || 'Failed to create checkout';
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({
+                    error: errorMessage,
+                    details: checkoutData.errors || checkoutData
+                })
+            };
         }
     } catch (error) {
         console.error('Error:', error);
