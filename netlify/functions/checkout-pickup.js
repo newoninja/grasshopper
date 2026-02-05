@@ -20,6 +20,12 @@ exports.handler = async (event) => {
     try {
         const { items, phone } = JSON.parse(event.body);
 
+        // Format phone number to E.164 format (Square requirement)
+        // Remove all non-numeric characters
+        const cleanPhone = phone.replace(/\D/g, '');
+        // Add +1 for US if not already present
+        const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
+
         // Get location ID
         const locationResponse = await fetch(`${SQUARE_BASE_URL}/locations`, {
             method: 'GET',
@@ -62,7 +68,7 @@ exports.handler = async (event) => {
                     ask_for_shipping_address: false
                 },
                 pre_populated_data: {
-                    buyer_phone_number: phone
+                    buyer_phone_number: formattedPhone
                 }
             })
         });
