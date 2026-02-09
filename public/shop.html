@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop | The Grasshopper</title>
+    <meta name="description" content="Shop professional hair care products from Olaplex, Bumble and Bumble, Living Proof, OUAI, and Color Wow at The Grasshopper">
+    <meta property="og:title" content="Shop | The Grasshopper">
+    <meta property="og:description" content="Shop professional hair care products from Olaplex, Bumble and Bumble, Living Proof, OUAI, and Color Wow at The Grasshopper">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://thegrasshopper.shop/shop.html">
+    <meta property="og:image" content="https://thegrasshopper.shop/site-photo.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -28,9 +34,21 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     <span class="cart-count">0</span>
                 </button>
+                <button class="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
             </div>
         </div>
     </nav>
+
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <a href="index.html" class="mobile-menu-link">Home</a>
+        <a href="shop.html" class="mobile-menu-link">Shop</a>
+        <a href="tel:8446215787" class="mobile-menu-link">(844) 621-5787</a>
+        <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="mobile-menu-link">Instagram</a>
+    </div>
 
     <div class="search-overlay">
         <div class="search-container">
@@ -51,6 +69,7 @@
         </div>
         <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
         <div class="cart-footer">
+            <div class="free-shipping-bar" id="freeShippingBar"></div>
             <div class="cart-summary">
                 <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
                 <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
@@ -90,17 +109,56 @@
                 <div class="filter-list" id="brandFilters"></div>
             </aside>
             <div class="products-container">
-                <div class="products-count" id="productsCount"></div>
+                <div class="shop-controls">
+                    <div class="products-count" id="productsCount"></div>
+                    <select class="sort-select" id="sortSelect" onchange="handleSort(this.value)">
+                        <option value="name-asc">Name A-Z</option>
+                        <option value="name-desc">Name Z-A</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                    </select>
+                </div>
                 <div class="products-grid" id="productsGrid">
-                    <div class="loading-spinner"><div class="spinner"></div><p>Loading products...</p></div>
+                    <div class="skeleton-grid">
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                        <div class="skeleton-card"><div class="skeleton-image"></div><div class="skeleton-text"></div><div class="skeleton-text short"></div></div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
     <footer class="footer footer-light">
-        <div class="footer-content">
-            <span class="footer-logo">The Grasshopper</span>
+        <div class="footer-main">
+            <div class="footer-brand">
+                <span class="footer-logo">The Grasshopper</span>
+                <p class="footer-tagline">Professional hair care curated by a 32-year veteran stylist</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="shop.html">All Products</a>
+                <a href="index.html#about">About D'yette</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <a href="tel:8446215787">(844) 621-5787</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">Instagram</a>
+            </div>
+            <div class="footer-links">
+                <h4>Info</h4>
+                <a href="#" onclick="return false;">Shipping Policy</a>
+                <a href="#" onclick="return false;">Returns</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
             <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
         </div>
     </footer>
@@ -109,6 +167,7 @@
     <script>
         let shopProducts = [];
         let selectedBrands = new Set();
+        let currentSort = 'name-asc';
 
         function renderProducts(products) {
             const grid = document.getElementById('productsGrid');
@@ -148,18 +207,35 @@
             applyFilters();
         }
 
+        function handleSort(value) {
+            currentSort = value;
+            applyFilters();
+        }
+
+        function sortProducts(products) {
+            const sorted = [...products];
+            switch (currentSort) {
+                case 'name-asc': return sorted.sort((a, b) => a.name.localeCompare(b.name));
+                case 'name-desc': return sorted.sort((a, b) => b.name.localeCompare(a.name));
+                case 'price-asc': return sorted.sort((a, b) => a.price - b.price);
+                case 'price-desc': return sorted.sort((a, b) => b.price - a.price);
+                default: return sorted;
+            }
+        }
+
         function applyFilters() {
             let filtered = shopProducts;
             if (selectedBrands.size > 0) {
                 filtered = shopProducts.filter(p => selectedBrands.has(p.brand || 'Other'));
             }
+            filtered = sortProducts(filtered);
             renderProducts(filtered);
         }
 
         function clearAllFilters() {
             selectedBrands.clear();
             document.querySelectorAll('#brandFilters input').forEach(cb => cb.checked = false);
-            renderProducts(shopProducts);
+            renderProducts(sortProducts(shopProducts));
         }
 
         document.addEventListener('DOMContentLoaded', async () => {

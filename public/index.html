@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Grasshopper | Salon & Beauty</title>
+    <meta name="description" content="The Grasshopper - Professional salon-quality hair care products curated by D'yette Spain, a 32-year veteran stylist in Charlotte, NC">
+    <meta property="og:title" content="The Grasshopper | Salon & Beauty">
+    <meta property="og:description" content="Professional salon-quality hair care products curated by D'yette Spain, a 32-year veteran stylist in Charlotte, NC">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://thegrasshopper.shop/">
+    <meta property="og:image" content="https://thegrasshopper.shop/site-photo.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -28,9 +34,21 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                     <span class="cart-count">0</span>
                 </button>
+                <button class="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
             </div>
         </div>
     </nav>
+
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <a href="index.html" class="mobile-menu-link">Home</a>
+        <a href="shop.html" class="mobile-menu-link">Shop</a>
+        <a href="tel:8446215787" class="mobile-menu-link">(844) 621-5787</a>
+        <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="mobile-menu-link">Instagram</a>
+    </div>
 
     <div class="search-overlay">
         <div class="search-container">
@@ -51,6 +69,7 @@
         </div>
         <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
         <div class="cart-footer">
+            <div class="free-shipping-bar" id="freeShippingBar"></div>
             <div class="cart-summary">
                 <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
                 <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
@@ -98,7 +117,28 @@
         <div class="salon-image"><img src="site-photo.png" alt="The Grasshopper Salon"></div>
     </section>
 
-    <section class="about-section">
+    <section class="trust-badges">
+        <div class="trust-badges-container">
+            <div class="trust-badge">
+                <span class="trust-icon">✦</span>
+                <span class="trust-text">32 Years Experience</span>
+            </div>
+            <div class="trust-badge">
+                <span class="trust-icon">✦</span>
+                <span class="trust-text">Vidal Sassoon Trained</span>
+            </div>
+            <div class="trust-badge">
+                <span class="trust-icon">✦</span>
+                <span class="trust-text">Redken Certified Colorist</span>
+            </div>
+            <div class="trust-badge">
+                <span class="trust-icon">✦</span>
+                <span class="trust-text">Salon Professional Products</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section" id="about">
         <div class="about-content">
             <div class="about-image"><img src="about-me.jpg" alt="D'yette Spain"></div>
             <div class="about-text">
@@ -116,9 +156,42 @@
         </div>
     </section>
 
+    <section class="newsletter-section">
+        <div class="newsletter-content">
+            <h2>Stay in the Loop</h2>
+            <p>Get styling tips, new product arrivals, and exclusive offers delivered to your inbox.</p>
+            <form class="newsletter-form" name="newsletter" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+                <input type="hidden" name="form-name" value="newsletter">
+                <p class="hidden" style="display:none"><input name="bot-field"></p>
+                <input type="email" name="email" placeholder="Enter your email" required class="newsletter-input">
+                <button type="submit" class="newsletter-btn">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
     <footer class="footer">
-        <div class="footer-content">
-            <span class="footer-logo">The Grasshopper</span>
+        <div class="footer-main">
+            <div class="footer-brand">
+                <span class="footer-logo">The Grasshopper</span>
+                <p class="footer-tagline">Professional hair care curated by a 32-year veteran stylist</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="shop.html">All Products</a>
+                <a href="index.html#about">About D'yette</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <a href="tel:8446215787">(844) 621-5787</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">Instagram</a>
+            </div>
+            <div class="footer-links">
+                <h4>Info</h4>
+                <a href="#" onclick="return false;">Shipping Policy</a>
+                <a href="#" onclick="return false;">Returns</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
             <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
         </div>
     </footer>

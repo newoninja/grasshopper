@@ -262,7 +262,7 @@ function addToCart(productId) {
 
     saveCart();
     updateCartUI();
-    openCart();
+    showToast('Added to cart!');
 }
 
 function removeFromCart(productId) {
@@ -307,6 +307,8 @@ function updateCartUI() {
     if (cartShipping) cartShipping.textContent = totalItems > 0 ? 'Calculated at checkout' : '$0.00';
     if (cartTotal) cartTotal.textContent = `$${subtotal.toFixed(2)}`;
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
+
+    updateFreeShippingBar();
 
     if (cart.length === 0) {
         cartItems.innerHTML = '<p class="cart-empty">Your cart is empty</p>';
@@ -402,6 +404,80 @@ function goToProduct(productId) {
 }
 
 // ============================================
+// Toast Notification
+// ============================================
+
+function showToast(message) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('visible');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('visible'), 2500);
+}
+
+// ============================================
+// Mobile Menu
+// ============================================
+
+function openMobileMenu() {
+    document.querySelector('.mobile-menu')?.classList.add('active');
+    document.querySelector('.mobile-menu-overlay')?.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+    document.querySelector('.mobile-menu')?.classList.remove('active');
+    document.querySelector('.mobile-menu-overlay')?.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// ============================================
+// Free Shipping Bar
+// ============================================
+
+function updateFreeShippingBar() {
+    const bar = document.getElementById('freeShippingBar');
+    if (!bar) return;
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const threshold = 75;
+    if (cart.length === 0) {
+        bar.innerHTML = '';
+        return;
+    }
+    if (subtotal >= threshold) {
+        bar.innerHTML = `
+            <div class="shipping-progress-text earned">You've earned free shipping!</div>
+            <div class="shipping-progress-track"><div class="shipping-progress-fill" style="width:100%"></div></div>
+        `;
+    } else {
+        const remaining = (threshold - subtotal).toFixed(2);
+        const pct = Math.min((subtotal / threshold) * 100, 100);
+        bar.innerHTML = `
+            <div class="shipping-progress-text">You're $${remaining} away from free shipping!</div>
+            <div class="shipping-progress-track"><div class="shipping-progress-fill" style="width:${pct}%"></div></div>
+        `;
+    }
+}
+
+// ============================================
+// Back to Top
+// ============================================
+
+function initBackToTop() {
+    const btn = document.getElementById('backToTop');
+    if (!btn) return;
+    window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 400);
+    });
+}
+
+// ============================================
 // Event Listeners
 // ============================================
 
@@ -418,7 +494,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('checkoutBtn')?.addEventListener('click', createCheckout);
 
+    // Mobile menu
+    document.querySelector('.nav-hamburger')?.addEventListener('click', openMobileMenu);
+    document.querySelector('.mobile-menu-close')?.addEventListener('click', closeMobileMenu);
+    document.querySelector('.mobile-menu-overlay')?.addEventListener('click', closeMobileMenu);
+
+    // Back to top
+    initBackToTop();
+
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closeCart(); closeSearch(); }
+        if (e.key === 'Escape') { closeCart(); closeSearch(); closeMobileMenu(); }
     });
 });
