@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Hair Analysis | The Grasshopper</title>
+    <meta name="description" content="Get a personalized hair analysis and product recommendations from D'yette Spain, powered by AI. Upload a photo of your hair to get started.">
+    <meta property="og:title" content="AI Hair Analysis | The Grasshopper">
+    <meta property="og:description" content="Get personalized hair care recommendations powered by AI and 32 years of styling expertise.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://thegrasshopper.shop/hair-analysis.html">
+    <meta property="og:image" content="https://thegrasshopper.shop/site-photo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="shop-page hair-analysis-page">
+    <nav class="nav nav-light">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">The Grasshopper</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="shop.html" class="nav-link">Shop</a>
+                <a href="hair-analysis.html" class="nav-link active">Hair Analysis</a>
+            </div>
+            <div class="nav-actions">
+                <button class="search-toggle" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                <button class="cart-toggle" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="cart-count">0</span>
+                </button>
+                <button class="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <a href="index.html" class="mobile-menu-link">Home</a>
+        <a href="shop.html" class="mobile-menu-link">Shop</a>
+        <a href="hair-analysis.html" class="mobile-menu-link">Hair Analysis</a>
+        <a href="tel:8446215787" class="mobile-menu-link">(844) 621-5787</a>
+        <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="mobile-menu-link">Instagram</a>
+    </div>
+
+    <div class="search-overlay">
+        <div class="search-container">
+            <button class="search-close">&times;</button>
+            <form class="search-form" onsubmit="handleSearch(event)">
+                <input type="text" class="search-input" placeholder="Search products..." id="searchInput">
+                <button type="submit" class="search-submit">Search</button>
+            </form>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <div class="cart-overlay"></div>
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
+                <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+            </div>
+            <button class="pickup-check-btn" onclick="openPickupModal()" id="pickupCheckBtn">Check Local Pickup</button>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout with Shipping</button>
+        </div>
+    </aside>
+
+    <div class="pickup-overlay" onclick="closePickupModal()"></div>
+    <div class="pickup-modal">
+        <div class="pickup-content">
+            <button class="pickup-close" onclick="closePickupModal()">&times;</button>
+            <h2>Local Pickup</h2>
+            <p class="pickup-description">Check if you're in our local pickup area and save on shipping!</p>
+            <div class="pickup-form">
+                <input type="text" id="pickupZip" class="pickup-zip-input" placeholder="Enter your zip code" maxlength="5" />
+                <button class="pickup-submit-btn" onclick="checkPickupEligibility()">Check Availability</button>
+            </div>
+            <div id="pickupResult" class="pickup-result"></div>
+        </div>
+    </div>
+
+    <main class="ha-main">
+        <header class="ha-hero">
+            <p class="ha-hero-tag">AI-Powered</p>
+            <h1 class="ha-hero-title">Hair Analysis</h1>
+            <p class="ha-hero-desc">Upload a photo of your hair and get a professional analysis with personalized product recommendations — powered by AI and D'yette's 32 years of styling expertise.</p>
+        </header>
+
+        <section class="ha-upload-section">
+            <div class="ha-dropzone" id="dropzone">
+                <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
+                <div class="ha-dropzone-content" id="dropzoneContent">
+                    <svg class="ha-upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="ha-dropzone-text">Drag & drop a photo of your hair</p>
+                    <p class="ha-dropzone-subtext">or click to select a file</p>
+                    <p class="ha-dropzone-hint">For best results, use a well-lit photo showing your hair clearly</p>
+                </div>
+                <div class="ha-preview" id="previewContainer" style="display:none">
+                    <img id="previewImage" alt="Hair photo preview">
+                    <button class="ha-preview-remove" id="removePreview">&times;</button>
+                </div>
+            </div>
+            <button class="ha-analyze-btn" id="analyzeBtn" disabled>Analyze My Hair</button>
+        </section>
+
+        <section class="ha-loading" id="loadingSection" style="display:none">
+            <div class="ha-loading-content">
+                <div class="ha-loading-spinner">
+                    <div class="ha-spinner-ring"></div>
+                </div>
+                <h3 class="ha-loading-title">Analyzing your hair...</h3>
+                <p class="ha-loading-text">D'yette's AI is examining your hair type, color, condition, and texture to find the perfect products for you.</p>
+            </div>
+        </section>
+
+        <section class="ha-results" id="resultsSection" style="display:none">
+            <div class="ha-analysis-card" id="analysisCard"></div>
+            <div class="ha-recommendations">
+                <h2 class="ha-rec-title">Recommended Products</h2>
+                <p class="ha-rec-subtitle">Selected specifically for your hair</p>
+                <div class="ha-rec-grid" id="recGrid"></div>
+            </div>
+            <div class="ha-results-actions">
+                <button class="ha-try-again-btn" onclick="resetAnalysis()">Try Another Photo</button>
+                <a href="shop.html" class="ha-browse-btn">Browse All Products</a>
+            </div>
+        </section>
+
+        <section class="ha-error" id="errorSection" style="display:none">
+            <p class="ha-error-text" id="errorText"></p>
+            <button class="ha-try-again-btn" onclick="resetAnalysis()">Try Again</button>
+        </section>
+    </main>
+
+    <footer class="footer footer-light">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <span class="footer-logo">The Grasshopper</span>
+                <p class="footer-tagline">Professional hair care curated by a stylist with 32 years of experience</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="shop.html">All Products</a>
+                <a href="hair-analysis.html">Hair Analysis</a>
+                <a href="about.html">About D'yette</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <a href="tel:8446215787">(844) 621-5787</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">Instagram</a>
+            </div>
+            <div class="footer-links">
+                <h4>Info</h4>
+                <a href="policies.html#shipping">Shipping Policy</a>
+                <a href="policies.html#returns">Returns</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const dropzoneContent = document.getElementById('dropzoneContent');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const removePreview = document.getElementById('removePreview');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorSection = document.getElementById('errorSection');
+
+        let selectedImageBase64 = null;
+
+        // Men's mode support
+        const isMensMode = localStorage.getItem('grasshopper-mens-mode') === 'true';
+        if (isMensMode) document.body.classList.add('mens-mode');
+
+        // Drag and drop
+        dropzone.addEventListener('click', (e) => {
+            if (e.target.closest('.ha-preview-remove')) return;
+            fileInput.click();
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) handleFile(fileInput.files[0]);
+        });
+
+        removePreview.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetUpload();
+        });
+
+        function handleFile(file) {
+            if (file.size > 20 * 1024 * 1024) {
+                showError('Image is too large. Please use a photo under 20MB.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                resizeImage(e.target.result, (resizedBase64) => {
+                    selectedImageBase64 = resizedBase64;
+                    previewImage.src = resizedBase64;
+                    dropzoneContent.style.display = 'none';
+                    previewContainer.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resizeImage(dataUrl, callback) {
+            const img = new Image();
+            img.onload = () => {
+                const maxDim = 1024;
+                let w = img.width, h = img.height;
+
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) {
+                        h = Math.round(h * maxDim / w);
+                        w = maxDim;
+                    } else {
+                        w = Math.round(w * maxDim / h);
+                        h = maxDim;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+
+                // Compress to JPEG, target ~800KB
+                let quality = 0.8;
+                let result = canvas.toDataURL('image/jpeg', quality);
+
+                // If still too large, reduce quality
+                while (result.length > 1_100_000 && quality > 0.3) {
+                    quality -= 0.1;
+                    result = canvas.toDataURL('image/jpeg', quality);
+                }
+
+                callback(result);
+            };
+            img.src = dataUrl;
+        }
+
+        function resetUpload() {
+            selectedImageBase64 = null;
+            fileInput.value = '';
+            previewContainer.style.display = 'none';
+            dropzoneContent.style.display = '';
+            analyzeBtn.disabled = true;
+        }
+
+        function resetAnalysis() {
+            resetUpload();
+            loadingSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            errorSection.style.display = 'none';
+            document.querySelector('.ha-upload-section').style.display = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            loadingSection.style.display = 'none';
+            document.querySelector('.ha-upload-section').style.display = 'none';
+            errorSection.style.display = '';
+            document.getElementById('errorText').textContent = message;
+        }
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedImageBase64) return;
+
+            document.querySelector('.ha-upload-section').style.display = 'none';
+            loadingSection.style.display = '';
+            errorSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/hair-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: selectedImageBase64,
+                        mensMode: document.body.classList.contains('mens-mode')
+                    })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.error || 'Analysis failed');
+                }
+
+                const data = await response.json();
+
+                // Store products so addToCart works
+                if (data.recommendations) {
+                    const recProducts = data.recommendations.map(r => r.product);
+                    allProducts = [...new Map([...allProducts, ...recProducts].map(p => [p.id, p])).values()];
+                }
+
+                renderResults(data);
+            } catch (error) {
+                console.error('Analysis error:', error);
+                showError(error.message || 'Something went wrong. Please try again.');
+            }
+        });
+
+        function renderResults(data) {
+            loadingSection.style.display = 'none';
+
+            const { analysis, recommendations } = data;
+
+            // Analysis card
+            const analysisCard = document.getElementById('analysisCard');
+            analysisCard.innerHTML = `
+                <h2 class="ha-analysis-title">Your Hair Analysis</h2>
+                <div class="ha-analysis-grid">
+                    <div class="ha-analysis-item">
+                        <h4>Hair Type</h4>
+                        <p>${escapeHtml(analysis.hairType)}</p>
+                    </div>
+                    <div class="ha-analysis-item">
+                        <h4>Color</h4>
+                        <p>${escapeHtml(analysis.hairColor)}</p>
+                    </div>
+                    <div class="ha-analysis-item">
+                        <h4>Condition</h4>
+                        <p>${escapeHtml(analysis.condition)}</p>
+                    </div>
+                    <div class="ha-analysis-item">
+                        <h4>Texture</h4>
+                        <p>${escapeHtml(analysis.texture)}</p>
+                    </div>
+                </div>
+            `;
+
+            // Product recommendations
+            const recGrid = document.getElementById('recGrid');
+            recGrid.innerHTML = recommendations.map(rec => `
+                <div class="ha-rec-card">
+                    <a href="product.html?id=${rec.product.id}" class="ha-rec-product-link">
+                        <div class="ha-rec-image">
+                            ${rec.product.imageUrl
+                                ? `<img src="${rec.product.imageUrl}" alt="${escapeHtml(rec.product.name)}" loading="lazy">`
+                                : '<div class="product-image-placeholder">No Image</div>'}
+                        </div>
+                    </a>
+                    <div class="ha-rec-info">
+                        <a href="product.html?id=${rec.product.id}" class="ha-rec-name-link">
+                            <h3 class="ha-rec-name">${escapeHtml(rec.product.name)}</h3>
+                        </a>
+                        <p class="ha-rec-brand">${escapeHtml(rec.product.brand)}</p>
+                        <p class="ha-rec-price">${rec.product.priceRange
+                            ? `$${rec.product.priceRange.min.toFixed(2)} - $${rec.product.priceRange.max.toFixed(2)}`
+                            : `$${rec.product.price.toFixed(2)}`}</p>
+                        <p class="ha-rec-reason">${escapeHtml(rec.reason)}</p>
+                        <div class="product-buttons">
+                            <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${rec.product.id}')">Add to Cart</button>
+                            <button class="buy-now-btn-small" onclick="event.stopPropagation(); buyNow('${rec.product.variationId}')">Buy Now</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            resultsSection.style.display = '';
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>

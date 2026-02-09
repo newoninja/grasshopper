@@ -1182,3 +1182,647 @@ body.mens-mode .mens-mode-btn {
     background: #2C3E50;
     border-color: #2C3E50;
 }
+
+/* ============================================
+   Hair Analysis Page
+   ============================================ */
+.ha-main {
+    padding: calc(4rem + 80px) 2rem 4rem;
+    min-height: 70vh;
+    background: white;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.ha-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.ha-hero-tag {
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--lavender-deep);
+    margin-bottom: 0.5rem;
+}
+.ha-hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 400;
+    margin-bottom: 1rem;
+}
+.ha-hero-desc {
+    color: var(--gray-600);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* Upload Dropzone */
+.ha-dropzone {
+    border: 2px dashed var(--gray-300);
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--gray-50);
+    position: relative;
+    min-height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ha-dropzone:hover, .ha-dropzone.dragover {
+    border-color: var(--lavender-deep);
+    background: var(--lavender-whisper);
+}
+.ha-upload-icon {
+    color: var(--lavender-mid);
+    margin-bottom: 1rem;
+}
+.ha-dropzone-text {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 0.25rem;
+}
+.ha-dropzone-subtext {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+}
+.ha-dropzone-hint {
+    font-size: 0.8125rem;
+    color: var(--lavender-mid);
+    font-style: italic;
+}
+
+/* Preview */
+.ha-preview {
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
+}
+.ha-preview img {
+    width: 100%;
+    border-radius: 12px;
+    object-fit: cover;
+    max-height: 350px;
+}
+.ha-preview-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ha-preview-remove:hover {
+    background: rgba(0,0,0,0.8);
+}
+
+/* Analyze Button */
+.ha-analyze-btn {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 1.5rem auto 0;
+    padding: 1.125rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--lavender-deep);
+    border-radius: 60px;
+    transition: all 0.3s;
+}
+.ha-analyze-btn:hover:not(:disabled) {
+    background: var(--gray-900);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(107,91,122,0.3);
+}
+.ha-analyze-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Loading State */
+.ha-loading-content {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+.ha-loading-spinner {
+    margin: 0 auto 2rem;
+    width: 60px;
+    height: 60px;
+    position: relative;
+}
+.ha-spinner-ring {
+    width: 60px;
+    height: 60px;
+    border: 3px solid var(--lavender-pale);
+    border-top-color: var(--lavender-deep);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+.ha-loading-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 0.75rem;
+}
+.ha-loading-text {
+    color: var(--gray-600);
+    max-width: 450px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Analysis Results Card */
+.ha-analysis-card {
+    background: var(--lavender-whisper);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+}
+.ha-analysis-title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+.ha-analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+.ha-analysis-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+.ha-analysis-item h4 {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--lavender-deep);
+    margin-bottom: 0.5rem;
+}
+.ha-analysis-item p {
+    color: var(--gray-600);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+/* Recommendations */
+.ha-rec-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 400;
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+.ha-rec-subtitle {
+    text-align: center;
+    color: var(--gray-600);
+    margin-bottom: 2rem;
+}
+.ha-rec-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.ha-rec-card {
+    display: flex;
+    gap: 1.5rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+}
+.ha-rec-card:hover {
+    box-shadow: 0 8px 30px rgba(107,91,122,0.12);
+}
+.ha-rec-image {
+    width: 160px;
+    flex-shrink: 0;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ha-rec-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 1rem;
+}
+.ha-rec-info {
+    flex: 1;
+    padding: 1.25rem 1.25rem 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+}
+.ha-rec-name {
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+.ha-rec-name-link:hover .ha-rec-name {
+    color: var(--lavender-deep);
+}
+.ha-rec-brand {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--lavender-deep);
+    margin-bottom: 0.25rem;
+}
+.ha-rec-price {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+}
+.ha-rec-reason {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--lavender-whisper);
+    border-radius: 8px;
+    border-left: 3px solid var(--lavender-deep);
+}
+.ha-rec-card .product-buttons {
+    margin-top: auto;
+}
+
+/* Results Actions */
+.ha-results-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 3rem;
+}
+.ha-try-again-btn {
+    padding: 1rem 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--lavender-deep);
+    background: var(--lavender-pale);
+    border-radius: 60px;
+    transition: all 0.3s;
+}
+.ha-try-again-btn:hover {
+    background: var(--lavender-soft);
+    transform: translateY(-2px);
+}
+.ha-browse-btn {
+    display: inline-block;
+    padding: 1rem 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--gray-900);
+    border-radius: 60px;
+    transition: all 0.3s;
+}
+.ha-browse-btn:hover {
+    background: var(--lavender-deep);
+    transform: translateY(-2px);
+}
+
+/* Error State */
+.ha-error {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+.ha-error-text {
+    color: var(--gray-600);
+    font-size: 1.0625rem;
+    margin-bottom: 2rem;
+}
+
+/* Homepage Promo Section */
+.ha-promo-section {
+    padding: 4rem 2rem;
+    background: var(--lavender-whisper);
+    text-align: center;
+}
+.ha-promo-content {
+    max-width: 650px;
+    margin: 0 auto;
+}
+.ha-promo-tag {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--lavender-deep);
+    margin-bottom: 0.75rem;
+}
+.ha-promo-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 400;
+    margin-bottom: 1rem;
+    color: var(--gray-900);
+}
+.ha-promo-desc {
+    color: var(--gray-600);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+.ha-promo-cta {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--lavender-deep);
+    border-radius: 60px;
+    transition: all 0.3s;
+}
+.ha-promo-cta:hover {
+    background: var(--gray-900);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(107,91,122,0.3);
+}
+
+/* Hair Analysis Responsive */
+@media (max-width: 768px) {
+    .ha-main { padding: calc(4rem + 60px) 1rem 3rem; }
+    .ha-analysis-grid { grid-template-columns: 1fr; }
+    .ha-rec-card { flex-direction: column; }
+    .ha-rec-image { width: 100%; height: 200px; }
+    .ha-rec-info { padding: 1.25rem; }
+    .ha-results-actions { flex-direction: column; align-items: center; }
+    .ha-dropzone { padding: 2rem 1rem; min-height: 200px; }
+}
+
+/* Men's mode overrides for hair analysis */
+body.mens-mode .ha-analysis-card {
+    background: #EEF1F4;
+}
+body.mens-mode .ha-rec-reason {
+    background: #EEF1F4;
+    border-left-color: #2C3E50;
+}
+body.mens-mode .ha-promo-section {
+    background: #EEF1F4;
+}
+
+/* ============================================
+   About Page
+   ============================================ */
+.about-page-main {
+    padding: calc(4rem + 80px) 2rem 4rem;
+    min-height: 70vh;
+    background: white;
+}
+
+.about-page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.about-page-tag {
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--lavender-deep);
+    margin-bottom: 0.5rem;
+}
+.about-page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 400;
+    font-style: italic;
+}
+
+.about-page-hero {
+    max-width: 1000px;
+    margin: 0 auto 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 3rem;
+    align-items: center;
+}
+.about-page-image {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(107,91,122,0.15);
+}
+.about-page-image img {
+    width: 100%;
+    display: block;
+}
+.about-page-intro h2 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 400;
+    margin-bottom: 1.25rem;
+    color: var(--gray-900);
+}
+.about-page-intro p {
+    color: var(--gray-600);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+}
+
+/* Credentials */
+.about-page-credentials {
+    max-width: 1000px;
+    margin: 0 auto 4rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+.credential-card {
+    background: var(--lavender-whisper);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+}
+.credential-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: white;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: var(--lavender-deep);
+    box-shadow: 0 2px 10px rgba(107,91,122,0.1);
+}
+.credential-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--gray-900);
+}
+.credential-card p {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    line-height: 1.7;
+}
+
+/* Philosophy */
+.about-page-philosophy {
+    max-width: 750px;
+    margin: 0 auto 4rem;
+    text-align: center;
+}
+.about-page-philosophy h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+    color: var(--gray-900);
+}
+.about-page-philosophy p {
+    color: var(--gray-600);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+}
+
+/* Salon Image */
+.about-page-salon {
+    max-width: 800px;
+    margin: 0 auto 4rem;
+}
+.about-salon-image {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(107,91,122,0.2);
+}
+.about-salon-image img {
+    width: 100%;
+    display: block;
+}
+
+/* Contact */
+.about-page-contact {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    padding-bottom: 2rem;
+}
+.about-page-contact h2 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 400;
+    margin-bottom: 0.75rem;
+}
+.about-page-contact > p {
+    color: var(--gray-600);
+    margin-bottom: 1.5rem;
+}
+.about-contact-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+.about-cta-row {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.about-cta-btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+    background: var(--gray-900);
+    border-radius: 60px;
+    transition: all 0.3s;
+}
+.about-cta-btn:hover {
+    background: var(--lavender-deep);
+    transform: translateY(-2px);
+}
+.about-cta-secondary {
+    background: var(--lavender-pale);
+    color: var(--lavender-deep);
+}
+.about-cta-secondary:hover {
+    background: var(--lavender-deep);
+    color: white;
+}
+
+/* About Page Responsive */
+@media (max-width: 768px) {
+    .about-page-main { padding: calc(4rem + 60px) 1rem 3rem; }
+    .about-page-hero { grid-template-columns: 1fr; gap: 2rem; }
+    .about-page-credentials { grid-template-columns: 1fr; }
+    .about-cta-row { flex-direction: column; align-items: center; }
+}
+
+/* ============================================
+   Homepage Trust Bar (secure checkout etc.)
+   ============================================ */
+.trust-bar {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-top: 1px solid var(--gray-100);
+    border-bottom: 1px solid var(--gray-100);
+}
+.trust-bar-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+.trust-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--gray-600);
+}
+.trust-bar-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lavender-deep);
+}
+
+@media (max-width: 768px) {
+    .trust-bar-container {
+        gap: 1rem 2rem;
+    }
+}

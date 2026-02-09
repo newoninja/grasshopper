@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About D'yette | The Grasshopper</title>
+    <meta name="description" content="Meet D'yette Spain — professional stylist with 32 years of experience, Vidal Sassoon trained, and Redken certified colorist in Charlotte, NC.">
+    <meta property="og:title" content="About D'yette | The Grasshopper">
+    <meta property="og:description" content="Meet D'yette Spain — professional stylist with 32 years of experience, Vidal Sassoon trained, and Redken certified colorist in Charlotte, NC.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://thegrasshopper.shop/about.html">
+    <meta property="og:image" content="https://thegrasshopper.shop/about-me.jpg">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="shop-page">
+    <nav class="nav nav-light">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">The Grasshopper</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="shop.html" class="nav-link">Shop</a>
+                <a href="hair-analysis.html" class="nav-link">Hair Analysis</a>
+            </div>
+            <div class="nav-actions">
+                <button class="search-toggle" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                <button class="cart-toggle" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="cart-count">0</span>
+                </button>
+                <button class="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <a href="index.html" class="mobile-menu-link">Home</a>
+        <a href="shop.html" class="mobile-menu-link">Shop</a>
+        <a href="hair-analysis.html" class="mobile-menu-link">Hair Analysis</a>
+        <a href="tel:8446215787" class="mobile-menu-link">(844) 621-5787</a>
+        <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="mobile-menu-link">Instagram</a>
+    </div>
+
+    <div class="search-overlay">
+        <div class="search-container">
+            <button class="search-close">&times;</button>
+            <form class="search-form" onsubmit="handleSearch(event)">
+                <input type="text" class="search-input" placeholder="Search products..." id="searchInput">
+                <button type="submit" class="search-submit">Search</button>
+            </form>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <div class="cart-overlay"></div>
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
+                <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+            </div>
+            <button class="pickup-check-btn" onclick="openPickupModal()" id="pickupCheckBtn">Check Local Pickup</button>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout with Shipping</button>
+        </div>
+    </aside>
+
+    <div class="pickup-overlay" onclick="closePickupModal()"></div>
+    <div class="pickup-modal">
+        <div class="pickup-content">
+            <button class="pickup-close" onclick="closePickupModal()">&times;</button>
+            <h2>Local Pickup</h2>
+            <p class="pickup-description">Check if you're in our local pickup area and save on shipping!</p>
+            <div class="pickup-form">
+                <input type="text" id="pickupZip" class="pickup-zip-input" placeholder="Enter your zip code" maxlength="5" />
+                <button class="pickup-submit-btn" onclick="checkPickupEligibility()">Check Availability</button>
+            </div>
+            <div id="pickupResult" class="pickup-result"></div>
+        </div>
+    </div>
+
+    <main class="about-page-main">
+        <header class="about-page-header">
+            <p class="about-page-tag">The Grasshopper</p>
+            <h1 class="about-page-title">Meet D'yette</h1>
+        </header>
+
+        <section class="about-page-hero">
+            <div class="about-page-image">
+                <img src="about-me.jpg" alt="D'yette Spain, professional stylist">
+            </div>
+            <div class="about-page-intro">
+                <h2>32 Years Behind the Chair</h2>
+                <p>D'yette Spain has been a stylist in Charlotte, NC, for thirty-two years. She began her career at Carmen Carmen in 1994 and went on to train at the prestigious Vidal Sassoon Academy in London — known worldwide for precision cutting and pioneering techniques in modern hairstyling.</p>
+                <p>She worked backstage for Redken for over ten years and achieved Redken's professional hair color certification — a mark of advanced color expertise that few stylists earn.</p>
+            </div>
+        </section>
+
+        <section class="about-page-credentials">
+            <div class="credential-card">
+                <span class="credential-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15l-2 5l4-2l4 2l-2-5"/><circle cx="12" cy="8" r="6"/></svg>
+                </span>
+                <h3>Vidal Sassoon Academy</h3>
+                <p>Trained in London at the academy that revolutionized modern hairstyling. Sassoon's precision cutting techniques remain the gold standard in the industry.</p>
+            </div>
+            <div class="credential-card">
+                <span class="credential-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
+                </span>
+                <h3>Redken Certified Colorist</h3>
+                <p>After over a decade working backstage with Redken, D'yette earned their professional hair color certification — a distinction recognizing advanced expertise in color formulation and application.</p>
+            </div>
+            <div class="credential-card">
+                <span class="credential-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </span>
+                <h3>Salon Owner & Advisor</h3>
+                <p>Her passion and drive have taken her from mentee to salon owner and world-class stylist who serves as an advisor and confidant for each client.</p>
+            </div>
+        </section>
+
+        <section class="about-page-philosophy">
+            <h2>The Grasshopper Philosophy</h2>
+            <p>Every product in the shop is hand-picked by D'yette — the same salon-quality brands she trusts and uses on her clients every day. She believes that professional products shouldn't be a luxury reserved for salon visits. Whether you're maintaining color between appointments, repairing damage, or simply want your hair to look and feel its best, D'yette has curated a collection that delivers real results.</p>
+            <p>She provides expert advice on product selection, hair care, and style and supports each client's unique beauty and wellness journey.</p>
+        </section>
+
+        <section class="about-page-salon">
+            <div class="about-salon-image">
+                <img src="site-photo.png" alt="The Grasshopper Salon">
+            </div>
+        </section>
+
+        <section class="about-page-contact">
+            <h2>Get in Touch</h2>
+            <p>Questions about products or want to book an appointment? D'yette would love to hear from you.</p>
+            <div class="about-contact-links">
+                <a href="tel:8446215787" class="contact-link phone">(844) 621-5787</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="contact-link instagram">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    @dyette_grasshopper
+                </a>
+            </div>
+            <div class="about-cta-row">
+                <a href="shop.html" class="about-cta-btn">Shop Products</a>
+                <a href="hair-analysis.html" class="about-cta-btn about-cta-secondary">Try Hair Analysis</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer footer-light">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <span class="footer-logo">The Grasshopper</span>
+                <p class="footer-tagline">Professional hair care curated by a stylist with 32 years of experience</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="shop.html">All Products</a>
+                <a href="hair-analysis.html">Hair Analysis</a>
+                <a href="about.html">About D'yette</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <a href="tel:8446215787">(844) 621-5787</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">Instagram</a>
+            </div>
+            <div class="footer-links">
+                <h4>Info</h4>
+                <a href="policies.html#shipping">Shipping Policy</a>
+                <a href="policies.html#returns">Returns</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
