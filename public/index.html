@@ -133,18 +133,16 @@
 
                     // Curated bestsellers across all brands
                     const featuredNames = [
-                        'Olaplex No. 3 Hair Perfector',
+                        'Olaplex No.3 Hair Perfector Take Home',
                         'B&B Hairdresser\'s Invisible Oil',
-                        'Living Proof Perfect Hair Day Dry Shampoo',
-                        'OUAI Wave Spray',
+                        'Living Proof Perfect Hair Day (PhD) Dry Shampoo',
+                        'Ouai Wave Spray',
                         'CW Dream Coat Supernatural Spray',
-                        'Olaplex No. 5 Bond Maintenance Conditioner'
+                        'Olaplex No. 7 Bonding Oil'
                     ];
 
                     const featured = featuredNames
-                        .map(name => products.find(p =>
-                            p.name.toLowerCase().includes(name.toLowerCase())
-                        ))
+                        .map(name => products.find(p => p.name === name))
                         .filter(Boolean);
 
                     // Fall back to first 6 products if we can't find enough matches
