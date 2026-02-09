@@ -607,11 +607,43 @@ img { max-width: 100%; height: auto; display: block; }
 .trust-badge {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
     background: white;
-    border-radius: 30px;
+    border-radius: 16px;
     box-shadow: 0 2px 10px rgba(107,91,122,0.08);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    transition: box-shadow 0.2s, border-radius 0.2s;
+    max-width: 280px;
+}
+.trust-badge:hover {
+    box-shadow: 0 4px 16px rgba(107,91,122,0.15);
+}
+.trust-expand {
+    margin-left: auto;
+    font-size: 1rem;
+    color: var(--lavender-deep);
+    transition: transform 0.2s;
+    font-weight: 300;
+}
+.trust-badge.open .trust-expand {
+    transform: rotate(45deg);
+}
+.trust-detail {
+    display: none;
+    width: 100%;
+    padding-top: 0.5rem;
+    font-size: 0.825rem;
+    line-height: 1.5;
+    color: #5a5a5a;
+}
+.trust-badge.open .trust-detail {
+    display: block;
 }
 .trust-icon {
     color: var(--lavender-deep);

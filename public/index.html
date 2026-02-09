@@ -127,22 +127,30 @@
 
     <section class="trust-badges">
         <div class="trust-badges-container">
-            <div class="trust-badge">
+            <button class="trust-badge" onclick="toggleBadge(this)">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">32 Years Experience</span>
-            </div>
-            <div class="trust-badge">
+                <span class="trust-expand">+</span>
+                <span class="trust-detail">D'yette has been a professional stylist in Charlotte, NC since 1994 — over three decades of expertise in cutting, coloring, and styling.</span>
+            </button>
+            <button class="trust-badge" onclick="toggleBadge(this)">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">Vidal Sassoon Trained</span>
-            </div>
-            <div class="trust-badge">
+                <span class="trust-expand">+</span>
+                <span class="trust-detail">Trained at the prestigious Vidal Sassoon Academy in London, known worldwide for precision cutting and pioneering techniques in modern hairstyling.</span>
+            </button>
+            <button class="trust-badge" onclick="toggleBadge(this)">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">Redken Certified Colorist</span>
-            </div>
-            <div class="trust-badge">
+                <span class="trust-expand">+</span>
+                <span class="trust-detail">Achieved Redken's professional hair color certification after working backstage with Redken for over ten years — a mark of advanced color expertise.</span>
+            </button>
+            <button class="trust-badge" onclick="toggleBadge(this)">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">Salon Professional Products</span>
-            </div>
+                <span class="trust-expand">+</span>
+                <span class="trust-detail">Every product in the shop is hand-picked by D'yette — the same salon-quality brands she trusts and uses on her clients every day.</span>
+            </button>
         </div>
     </section>
 
@@ -207,6 +215,13 @@
 
     <script src="app.js"></script>
     <script>
+        // Trust badge expand/collapse
+        function toggleBadge(el) {
+            const wasOpen = el.classList.contains('open');
+            document.querySelectorAll('.trust-badge.open').forEach(b => b.classList.remove('open'));
+            if (!wasOpen) el.classList.add('open');
+        }
+
         // Men's mode toggle
         function toggleMensMode(enable) {
             document.body.classList.toggle('mens-mode', enable);
