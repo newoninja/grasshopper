@@ -2,11 +2,20 @@ const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 
 const brandPatterns = [
+    // Women's brands
     { pattern: /^b&b\s|^bumble/i, brand: 'Bumble and Bumble' },
     { pattern: /^olaplex/i, brand: 'Olaplex' },
     { pattern: /^ouai/i, brand: 'OUAI' },
     { pattern: /^living proof/i, brand: 'Living Proof' },
     { pattern: /^cw\s/i, brand: 'Color Wow' },
+    // Men's brands
+    { pattern: /^redken brews/i, brand: 'Redken Brews' },
+    { pattern: /^american crew/i, brand: 'American Crew' },
+    { pattern: /^18\.21\s*man\s*made/i, brand: '18.21 Man Made' },
+    { pattern: /^pete\s*&\s*pedro/i, brand: 'Pete & Pedro' },
+    { pattern: /^big sexy hair|^sexy hair style/i, brand: 'Sexy Hair' },
+    { pattern: /^l3vel3/i, brand: 'L3VEL3' },
+    { pattern: /^the good sh[*i]t/i, brand: 'The Good Sh*t' },
 ];
 
 function extractBrand(name) {
@@ -83,6 +92,27 @@ exports.handler = async (event) => {
         const itemData = item.item_data;
         const images = await fetchAllImages();
 
+        // Resolve category
+        let category = null;
+        if (itemData.category_id) {
+            try {
+                const catResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${itemData.category_id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Square-Version': '2024-01-18',
+                        'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const catData = await catResponse.json();
+                if (catData.object?.category_data?.name) {
+                    category = catData.object.category_data.name;
+                }
+            } catch (e) {
+                console.error('Error fetching category:', e);
+            }
+        }
+
         let imageUrl = null;
         if (itemData.image_ids?.length > 0) {
             imageUrl = images[itemData.image_ids[0]];
@@ -122,7 +152,8 @@ exports.handler = async (event) => {
             priceRange: minPrice !== maxPrice ? { min: minPrice, max: maxPrice } : null,
             variations,
             imageUrl,
-            brand: extractBrand(itemData.name || '')
+            brand: extractBrand(itemData.name || ''),
+            category
         };
 
         return { statusCode: 200, headers, body: JSON.stringify(product) };

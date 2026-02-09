@@ -2,11 +2,20 @@ const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 
 const brandPatterns = [
+    // Women's brands
     { pattern: /^b&b\s|^bumble/i, brand: 'Bumble and Bumble' },
     { pattern: /^olaplex/i, brand: 'Olaplex' },
     { pattern: /^ouai/i, brand: 'OUAI' },
     { pattern: /^living proof/i, brand: 'Living Proof' },
     { pattern: /^cw\s/i, brand: 'Color Wow' },
+    // Men's brands
+    { pattern: /^redken brews/i, brand: 'Redken Brews' },
+    { pattern: /^american crew/i, brand: 'American Crew' },
+    { pattern: /^18\.21\s*man\s*made/i, brand: '18.21 Man Made' },
+    { pattern: /^pete\s*&\s*pedro/i, brand: 'Pete & Pedro' },
+    { pattern: /^big sexy hair|^sexy hair style/i, brand: 'Sexy Hair' },
+    { pattern: /^l3vel3/i, brand: 'L3VEL3' },
+    { pattern: /^the good sh[*i]t/i, brand: 'The Good Sh*t' },
 ];
 
 function extractBrand(name) {
@@ -76,6 +85,34 @@ exports.handler = async (event) => {
         const data = await response.json();
         const images = await fetchAllImages();
 
+        // Fetch categories for category mapping
+        const categories = {};
+        try {
+            let catCursor = null;
+            do {
+                const catUrl = new URL(`${SQUARE_BASE_URL}/catalog/list`);
+                catUrl.searchParams.append('types', 'CATEGORY');
+                if (catCursor) catUrl.searchParams.append('cursor', catCursor);
+                const catResp = await fetch(catUrl.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'Square-Version': '2024-01-18',
+                        'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const catData = await catResp.json();
+                if (catData.objects) {
+                    catData.objects.forEach(cat => {
+                        if (cat.category_data?.name) categories[cat.id] = cat.category_data.name;
+                    });
+                }
+                catCursor = catData.cursor;
+            } while (catCursor);
+        } catch (e) {
+            console.error('Error fetching categories:', e);
+        }
+
         const products = (data.objects || [])
             .map(item => {
                 const itemData = item.item_data;
@@ -95,6 +132,11 @@ exports.handler = async (event) => {
                     }
                 }
 
+                let category = null;
+                if (itemData.category_id) {
+                    category = categories[itemData.category_id] || null;
+                }
+
                 return {
                     id: item.id,
                     variationId,
@@ -103,12 +145,12 @@ exports.handler = async (event) => {
                     price,
                     imageUrl,
                     brand: extractBrand(itemData.name || ''),
+                    category,
                     productType: itemData.product_type
                 };
             })
             .filter(product => {
                 if (product.productType === 'APPOINTMENTS_SERVICE') return false;
-                if (!product.imageUrl) return false;
                 return true;
             });
 

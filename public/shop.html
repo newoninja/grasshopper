@@ -246,50 +246,58 @@
             renderProducts(sortProducts(shopProducts));
         }
 
+        let allFetchedProducts = [];
+        let isMensMode = false;
+
+        function getFilteredProducts() {
+            if (isMensMode) {
+                return allFetchedProducts.filter(p => p.category === 'Mens Products');
+            }
+            return allFetchedProducts.filter(p => p.category !== 'Mens Products');
+        }
+
         function toggleShopMensMode(enable) {
+            isMensMode = enable;
             document.body.classList.toggle('mens-mode', enable);
-            // Keep shop-page class
             document.body.classList.add('shop-page');
             localStorage.setItem('grasshopper-mens-mode', enable ? 'true' : 'false');
 
             const title = document.getElementById('shopTitle');
             const subtitle = document.getElementById('shopSubtitle');
-            const grid = document.getElementById('productsGrid');
             const sidebar = document.querySelector('.filter-sidebar');
             const controls = document.querySelector('.shop-controls');
-            const countEl = document.getElementById('productsCount');
 
             if (enable) {
                 title.textContent = "Men's Collection";
                 subtitle.textContent = 'Premium grooming & style essentials';
-                sidebar.style.display = 'none';
-                controls.style.display = 'none';
-                grid.innerHTML = `
-                    <div class="mens-coming-soon">
-                        <h3>Men's Products Coming Soon</h3>
-                        <p>We're curating a premium collection of grooming and style products for men. Check back soon.</p>
-                    </div>
-                `;
             } else {
                 title.textContent = 'Shop All Products';
                 subtitle.textContent = 'Professional salon-quality products';
-                sidebar.style.display = '';
-                controls.style.display = '';
-                applyFilters();
             }
+
+            sidebar.style.display = '';
+            controls.style.display = '';
+
+            shopProducts = getFilteredProducts();
+            selectedBrands.clear();
+            renderBrandFilters(shopProducts);
+            document.querySelectorAll('#brandFilters input').forEach(cb => cb.checked = false);
+            applyFilters();
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('productsGrid');
-            const isMensMode = localStorage.getItem('grasshopper-mens-mode') === 'true';
+            const savedMensMode = localStorage.getItem('grasshopper-mens-mode') === 'true';
 
-            if (isMensMode) {
+            if (savedMensMode) {
                 document.body.classList.add('mens-mode');
+                isMensMode = true;
             }
 
             try {
-                shopProducts = await fetchProducts();
-                renderProducts(shopProducts);
+                allFetchedProducts = await fetchProducts();
+                shopProducts = getFilteredProducts();
+                renderProducts(sortProducts(shopProducts));
                 renderBrandFilters(shopProducts);
                 document.getElementById('clearFilters').addEventListener('click', clearAllFilters);
             } catch (e) {
@@ -297,8 +305,7 @@
                 grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
             }
 
-            // Apply men's mode after products loaded
-            if (isMensMode) {
+            if (savedMensMode) {
                 toggleShopMensMode(true);
             }
         });

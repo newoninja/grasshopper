@@ -240,18 +240,32 @@
             if (!grid) return;
 
             if (isMens) {
-                sectionTag.textContent = 'Coming Soon';
+                sectionTag.textContent = 'Discover';
                 sectionTitle.textContent = "Men's Collection";
-                grid.innerHTML = `
-                    <div class="mens-coming-soon">
-                        <h3>Men's Products Coming Soon</h3>
-                        <p>We're curating a premium collection of grooming and style products for men. Check back soon.</p>
-                    </div>
-                `;
+                loadMensFeaturedProducts();
             } else {
                 sectionTag.textContent = 'Discover';
                 sectionTitle.textContent = 'Featured Products';
                 loadFeaturedProducts();
+            }
+        }
+
+        async function loadMensFeaturedProducts() {
+            const grid = document.getElementById('featuredGrid');
+            if (!grid) return;
+            grid.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            try {
+                const products = await fetchProducts();
+                const mensProducts = products.filter(p => p.category === 'Mens Products');
+                const displayProducts = mensProducts.slice(0, 6);
+                if (displayProducts.length === 0) {
+                    grid.innerHTML = '<p class="no-products">No men\'s products available yet. Check back soon!</p>';
+                    return;
+                }
+                grid.innerHTML = displayProducts.map(p => createProductCard(p)).join('');
+            } catch (e) {
+                console.error('Error loading men\'s products:', e);
+                grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
             }
         }
 
@@ -260,6 +274,7 @@
             if (!grid) return;
             try {
                 const products = await fetchProducts();
+                const womensProducts = products.filter(p => p.category !== 'Mens Products');
                 const featuredNames = [
                     'Olaplex No.3 Hair Perfector Take Home',
                     'B&B Hairdresser\'s Invisible Oil',
@@ -269,9 +284,9 @@
                     'Olaplex No. 7 Bonding Oil'
                 ];
                 const featured = featuredNames
-                    .map(name => products.find(p => p.name === name))
+                    .map(name => womensProducts.find(p => p.name === name))
                     .filter(Boolean);
-                const displayProducts = featured.length >= 4 ? featured : products.slice(0, 6);
+                const displayProducts = featured.length >= 4 ? featured : womensProducts.slice(0, 6);
                 grid.innerHTML = displayProducts.map(p => createProductCard(p)).join('');
             } catch (e) {
                 console.error('Error loading products:', e);

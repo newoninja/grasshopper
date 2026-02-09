@@ -198,6 +198,11 @@
                     </div>
                 `;
 
+                // Apply men's mode theme if this is a men's product
+                if (currentProduct.category === 'Mens Products') {
+                    document.body.classList.add('mens-mode');
+                }
+
                 // Update OG meta tags dynamically
                 document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${currentProduct.name} | The Grasshopper`);
                 document.querySelector('meta[property="og:description"]')?.setAttribute('content', currentProduct.description || `Shop ${currentProduct.name} at The Grasshopper`);

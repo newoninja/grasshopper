@@ -5,11 +5,20 @@ const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 console.log('Token exists:', !!SQUARE_ACCESS_TOKEN);
 
 const brandPatterns = [
+    // Women's brands
     { pattern: /^b&b\s|^bumble/i, brand: 'Bumble and Bumble' },
     { pattern: /^olaplex/i, brand: 'Olaplex' },
     { pattern: /^ouai/i, brand: 'OUAI' },
     { pattern: /^living proof/i, brand: 'Living Proof' },
     { pattern: /^cw\s/i, brand: 'Color Wow' },
+    // Men's brands
+    { pattern: /^redken brews/i, brand: 'Redken Brews' },
+    { pattern: /^american crew/i, brand: 'American Crew' },
+    { pattern: /^18\.21\s*man\s*made/i, brand: '18.21 Man Made' },
+    { pattern: /^pete\s*&\s*pedro/i, brand: 'Pete & Pedro' },
+    { pattern: /^big sexy hair|^sexy hair style/i, brand: 'Sexy Hair' },
+    { pattern: /^l3vel3/i, brand: 'L3VEL3' },
+    { pattern: /^the good sh[*i]t/i, brand: 'The Good Sh*t' },
 ];
 
 function extractBrand(name) {
@@ -21,13 +30,13 @@ function extractBrand(name) {
     return 'Color Wow';
 }
 
-async function fetchAllImages() {
-    const images = {};
+async function fetchAllCatalogObjects(type) {
+    const objects = [];
     let cursor = null;
 
     do {
         const url = new URL(`${SQUARE_BASE_URL}/catalog/list`);
-        url.searchParams.append('types', 'IMAGE');
+        url.searchParams.append('types', type);
         if (cursor) url.searchParams.append('cursor', cursor);
 
         const response = await fetch(url.toString(), {
@@ -41,22 +50,38 @@ async function fetchAllImages() {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Square API Error (images):', response.status, errorText);
+            console.error(`Square API Error (${type}):`, response.status, errorText);
             throw new Error(`Square API returned ${response.status}: ${errorText}`);
         }
 
         const data = await response.json();
-        if (data.objects) {
-            data.objects.forEach(img => {
-                if (img.image_data?.url) {
-                    images[img.id] = img.image_data.url;
-                }
-            });
-        }
+        if (data.objects) objects.push(...data.objects);
         cursor = data.cursor;
     } while (cursor);
 
+    return objects;
+}
+
+async function fetchAllImages() {
+    const imageObjects = await fetchAllCatalogObjects('IMAGE');
+    const images = {};
+    imageObjects.forEach(img => {
+        if (img.image_data?.url) {
+            images[img.id] = img.image_data.url;
+        }
+    });
     return images;
+}
+
+async function fetchCategories() {
+    const categoryObjects = await fetchAllCatalogObjects('CATEGORY');
+    const categories = {};
+    categoryObjects.forEach(cat => {
+        if (cat.category_data?.name) {
+            categories[cat.id] = cat.category_data.name;
+        }
+    });
+    return categories;
 }
 
 exports.handler = async (event) => {
@@ -112,7 +137,7 @@ exports.handler = async (event) => {
             cursor = data.cursor;
         } while (cursor);
 
-        const images = await fetchAllImages();
+        const [images, categories] = await Promise.all([fetchAllImages(), fetchCategories()]);
 
         const products = allItems
             .map(item => {
@@ -141,6 +166,12 @@ exports.handler = async (event) => {
                     variationId = itemData.variations[0].id;
                 }
 
+                // Resolve category name from category_id
+                let category = null;
+                if (itemData.category_id) {
+                    category = categories[itemData.category_id] || null;
+                }
+
                 return {
                     id: item.id,
                     variationId,
@@ -150,12 +181,12 @@ exports.handler = async (event) => {
                     priceRange: minPrice !== maxPrice ? { min: minPrice, max: maxPrice } : null,
                     imageUrl,
                     brand: extractBrand(itemData.name || ''),
+                    category,
                     productType: itemData.product_type
                 };
             })
             .filter(product => {
                 if (product.productType === 'APPOINTMENTS_SERVICE') return false;
-                if (!product.imageUrl) return false;
                 return true;
             });
 
