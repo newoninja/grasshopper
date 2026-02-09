@@ -127,31 +127,24 @@
 
     <section class="trust-badges">
         <div class="trust-badges-container">
-            <button class="trust-badge" onclick="toggleBadge(this)">
+            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="D'yette has been a professional stylist in Charlotte, NC since 1994 — over three decades of expertise in cutting, coloring, and styling.">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">32 Years Experience</span>
-                <span class="trust-expand">+</span>
-                <span class="trust-detail">D'yette has been a professional stylist in Charlotte, NC since 1994 — over three decades of expertise in cutting, coloring, and styling.</span>
             </button>
-            <button class="trust-badge" onclick="toggleBadge(this)">
+            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="Trained at the prestigious Vidal Sassoon Academy in London, known worldwide for precision cutting and pioneering techniques in modern hairstyling.">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">Vidal Sassoon Trained</span>
-                <span class="trust-expand">+</span>
-                <span class="trust-detail">Trained at the prestigious Vidal Sassoon Academy in London, known worldwide for precision cutting and pioneering techniques in modern hairstyling.</span>
             </button>
-            <button class="trust-badge" onclick="toggleBadge(this)">
+            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="Achieved Redken's professional hair color certification after working backstage with Redken for over ten years — a mark of advanced color expertise.">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">Redken Certified Colorist</span>
-                <span class="trust-expand">+</span>
-                <span class="trust-detail">Achieved Redken's professional hair color certification after working backstage with Redken for over ten years — a mark of advanced color expertise.</span>
             </button>
-            <button class="trust-badge" onclick="toggleBadge(this)">
+            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="Every product in the shop is hand-picked by D'yette — the same salon-quality brands she trusts and uses on her clients every day.">
                 <span class="trust-icon">✦</span>
                 <span class="trust-text">Salon Professional Products</span>
-                <span class="trust-expand">+</span>
-                <span class="trust-detail">Every product in the shop is hand-picked by D'yette — the same salon-quality brands she trusts and uses on her clients every day.</span>
             </button>
         </div>
+        <div class="trust-detail-panel" id="trustDetailPanel"></div>
     </section>
 
     <section class="about-section" id="about">
@@ -217,9 +210,17 @@
     <script>
         // Trust badge expand/collapse
         function toggleBadge(el) {
+            const panel = document.getElementById('trustDetailPanel');
             const wasOpen = el.classList.contains('open');
             document.querySelectorAll('.trust-badge.open').forEach(b => b.classList.remove('open'));
-            if (!wasOpen) el.classList.add('open');
+            if (wasOpen) {
+                panel.classList.remove('visible');
+                panel.textContent = '';
+            } else {
+                el.classList.add('open');
+                panel.textContent = el.dataset.detail;
+                panel.classList.add('visible');
+            }
         }
 
         // Men's mode toggle

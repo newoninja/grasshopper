@@ -607,43 +607,39 @@ img { max-width: 100%; height: auto; display: block; }
 .trust-badge {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.75rem 1.25rem;
     background: white;
-    border-radius: 16px;
+    border-radius: 30px;
     box-shadow: 0 2px 10px rgba(107,91,122,0.08);
-    border: none;
+    border: 2px solid transparent;
     cursor: pointer;
     font-family: inherit;
     font-size: inherit;
-    text-align: left;
-    transition: box-shadow 0.2s, border-radius 0.2s;
-    max-width: 280px;
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 .trust-badge:hover {
     box-shadow: 0 4px 16px rgba(107,91,122,0.15);
 }
-.trust-expand {
-    margin-left: auto;
-    font-size: 1rem;
-    color: var(--lavender-deep);
-    transition: transform 0.2s;
-    font-weight: 300;
+.trust-badge.open {
+    border-color: var(--lavender-deep);
 }
-.trust-badge.open .trust-expand {
-    transform: rotate(45deg);
-}
-.trust-detail {
-    display: none;
-    width: 100%;
-    padding-top: 0.5rem;
-    font-size: 0.825rem;
-    line-height: 1.5;
+.trust-detail-panel {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.6;
     color: #5a5a5a;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
 }
-.trust-badge.open .trust-detail {
-    display: block;
+.trust-detail-panel.visible {
+    max-height: 120px;
+    opacity: 1;
+    margin-top: 1.5rem;
 }
 .trust-icon {
     color: var(--lavender-deep);
