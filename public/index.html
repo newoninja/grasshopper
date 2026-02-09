@@ -168,12 +168,13 @@
         <div class="newsletter-content">
             <h2>Stay in the Loop</h2>
             <p>Get styling tips, new product arrivals, and exclusive offers delivered to your inbox.</p>
-            <form class="newsletter-form" name="newsletter" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+            <form class="newsletter-form" name="newsletter" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="newsletterForm">
                 <input type="hidden" name="form-name" value="newsletter">
                 <p class="hidden" style="display:none"><input name="bot-field"></p>
                 <input type="email" name="email" placeholder="Enter your email" required class="newsletter-input">
                 <button type="submit" class="newsletter-btn">Subscribe</button>
             </form>
+            <p class="newsletter-success" id="newsletterSuccess" style="display:none">Thanks for subscribing! We'll keep you in the loop.</p>
         </div>
     </section>
 
@@ -303,6 +304,30 @@
                 updateFeaturedForMode(true);
             } else {
                 await loadFeaturedProducts();
+            }
+
+            // Newsletter form - submit via fetch to prevent redirect
+            const form = document.getElementById('newsletterForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const btn = form.querySelector('.newsletter-btn');
+                    btn.textContent = 'Sending...';
+                    btn.disabled = true;
+                    try {
+                        await fetch('/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: new URLSearchParams(new FormData(form)).toString()
+                        });
+                        form.style.display = 'none';
+                        document.getElementById('newsletterSuccess').style.display = '';
+                    } catch (err) {
+                        btn.textContent = 'Subscribe';
+                        btn.disabled = false;
+                        alert('Something went wrong. Please try again.');
+                    }
+                });
             }
         });
     </script>

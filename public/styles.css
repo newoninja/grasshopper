@@ -701,6 +701,7 @@ img { max-width: 100%; height: auto; display: block; }
     transition: background 0.2s;
 }
 .newsletter-btn:hover { background: var(--lavender-deep); }
+.newsletter-success { color: #fff; font-size: 1.1rem; margin-top: 1rem; }
 
 @media (max-width: 768px) {
     .newsletter-form { flex-direction: column; }
