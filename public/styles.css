@@ -33,6 +33,40 @@ img { max-width: 100%; height: auto; display: block; }
 .nav-link { font-size: 0.875rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-600); }
 .nav-link:hover, .nav-link.active { color: var(--gray-900); }
 .nav-actions { display: flex; gap: 1rem; }
+/* AI Scan Nav Button */
+.hai-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: white;
+    background: var(--lavender-deep);
+    border-radius: 60px;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+.hai-nav-btn:hover {
+    background: var(--gray-900);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(107,91,122,0.3);
+}
+.hai-nav-btn.active {
+    background: var(--gray-900);
+}
+.hai-nav-btn svg {
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .hai-nav-btn span { display: none; }
+    .hai-nav-btn { padding: 0.5rem; border-radius: 50%; width: 36px; height: 36px; justify-content: center; }
+}
+
 .search-toggle, .cart-toggle { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--gray-800); }
 .search-toggle:hover, .cart-toggle:hover { background: var(--lavender-pale); }
 .cart-toggle { position: relative; }

@@ -226,7 +226,7 @@ RESPONSE FORMAT — respond with valid JSON only, no markdown:
                 'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-5-20250514',
+                model: 'claude-sonnet-4-5-20250929',
                 max_tokens: 1500,
                 system: systemPrompt,
                 messages: [{
