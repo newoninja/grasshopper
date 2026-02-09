@@ -18,6 +18,11 @@ const brandPatterns = [
     { pattern: /^the good sh[*i]t/i, brand: 'The Good Sh*t' },
 ];
 
+const mensBrands = new Set([
+    'Redken Brews', 'American Crew', '18.21 Man Made',
+    'Pete & Pedro', 'Sexy Hair', 'L3VEL3', 'The Good Sh*t'
+]);
+
 function extractBrand(name) {
     for (const { pattern, brand } of brandPatterns) {
         if (pattern.test(name)) return brand;
@@ -137,6 +142,13 @@ exports.handler = async (event) => {
                     category = categories[itemData.category_id] || null;
                 }
 
+                const brand = extractBrand(itemData.name || '');
+
+                // Auto-assign men's category if brand is a men's brand
+                if (!category && mensBrands.has(brand)) {
+                    category = 'Mens Products';
+                }
+
                 return {
                     id: item.id,
                     variationId,
@@ -144,7 +156,7 @@ exports.handler = async (event) => {
                     description: itemData.description || '',
                     price,
                     imageUrl,
-                    brand: extractBrand(itemData.name || ''),
+                    brand,
                     category,
                     productType: itemData.product_type
                 };
