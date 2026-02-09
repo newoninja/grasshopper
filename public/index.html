@@ -130,7 +130,27 @@
             if (grid) {
                 try {
                     const products = await fetchProducts();
-                    grid.innerHTML = products.slice(0, 6).map(p => createProductCard(p)).join('');
+
+                    // Curated bestsellers across all brands
+                    const featuredNames = [
+                        'Olaplex No. 3 Hair Perfector',
+                        'B&B Hairdresser\'s Invisible Oil',
+                        'Living Proof Perfect Hair Day Dry Shampoo',
+                        'OUAI Wave Spray',
+                        'CW Dream Coat Supernatural Spray',
+                        'Olaplex No. 5 Bond Maintenance Conditioner'
+                    ];
+
+                    const featured = featuredNames
+                        .map(name => products.find(p =>
+                            p.name.toLowerCase().includes(name.toLowerCase())
+                        ))
+                        .filter(Boolean);
+
+                    // Fall back to first 6 products if we can't find enough matches
+                    const displayProducts = featured.length >= 4 ? featured : products.slice(0, 6);
+
+                    grid.innerHTML = displayProducts.map(p => createProductCard(p)).join('');
                 } catch (e) {
                     console.error('Error loading products:', e);
                     grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
