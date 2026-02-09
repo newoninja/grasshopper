@@ -94,8 +94,17 @@
     </div>
 
     <header class="shop-header">
-        <h1>Shop All Products</h1>
-        <p>Professional salon-quality products</p>
+        <h1 id="shopTitle">Shop All Products</h1>
+        <p id="shopSubtitle">Professional salon-quality products</p>
+        <div class="mode-toggle-container" style="margin-top:1rem">
+            <button class="mens-mode-btn" onclick="toggleShopMensMode(true)" aria-label="Switch to men's collection">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9.5 11c1.93 0 3.5 1.57 3.5 3.5S11.43 18 9.5 18 6 16.43 6 14.5 7.57 11 9.5 11zm0-2C6.46 9 4 11.46 4 14.5S6.46 20 9.5 20s5.5-2.46 5.5-5.5c0-1.16-.36-2.24-.97-3.13L20 5.4V10h2V2h-8v2h4.6l-5.97 5.97A5.47 5.47 0 0 0 9.5 9z"/></svg>
+                For Men
+            </button>
+            <button class="womens-mode-btn" onclick="toggleShopMensMode(false)">
+                Back to Women's
+            </button>
+        </div>
     </header>
 
     <main class="shop-main">
@@ -237,8 +246,47 @@
             renderProducts(sortProducts(shopProducts));
         }
 
+        function toggleShopMensMode(enable) {
+            document.body.classList.toggle('mens-mode', enable);
+            // Keep shop-page class
+            document.body.classList.add('shop-page');
+            localStorage.setItem('grasshopper-mens-mode', enable ? 'true' : 'false');
+
+            const title = document.getElementById('shopTitle');
+            const subtitle = document.getElementById('shopSubtitle');
+            const grid = document.getElementById('productsGrid');
+            const sidebar = document.querySelector('.filter-sidebar');
+            const controls = document.querySelector('.shop-controls');
+            const countEl = document.getElementById('productsCount');
+
+            if (enable) {
+                title.textContent = "Men's Collection";
+                subtitle.textContent = 'Premium grooming & style essentials';
+                sidebar.style.display = 'none';
+                controls.style.display = 'none';
+                grid.innerHTML = `
+                    <div class="mens-coming-soon">
+                        <h3>Men's Products Coming Soon</h3>
+                        <p>We're curating a premium collection of grooming and style products for men. Check back soon.</p>
+                    </div>
+                `;
+            } else {
+                title.textContent = 'Shop All Products';
+                subtitle.textContent = 'Professional salon-quality products';
+                sidebar.style.display = '';
+                controls.style.display = '';
+                applyFilters();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const grid = document.getElementById('productsGrid');
+            const isMensMode = localStorage.getItem('grasshopper-mens-mode') === 'true';
+
+            if (isMensMode) {
+                document.body.classList.add('mens-mode');
+            }
+
             try {
                 shopProducts = await fetchProducts();
                 renderProducts(shopProducts);
@@ -247,6 +295,11 @@
             } catch (e) {
                 console.error('Error loading products:', e);
                 grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
+            }
+
+            // Apply men's mode after products loaded
+            if (isMensMode) {
+                toggleShopMensMode(true);
             }
         });
     </script>

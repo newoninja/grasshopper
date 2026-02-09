@@ -997,3 +997,159 @@ img { max-width: 100%; height: auto; display: block; }
 .policy-section a:hover {
     text-decoration: underline;
 }
+
+/* ============================================
+   Men's Mode Theme Override
+   ============================================ */
+body.mens-mode {
+    --lavender-deep: #2C3E50;
+    --lavender-mid: #3A5A7C;
+    --lavender-soft: #5D7B9D;
+    --lavender-pale: #D6DDE5;
+    --lavender-whisper: #EEF1F4;
+}
+
+body.mens-mode .hero {
+    background: radial-gradient(ellipse at 20% 80%, #D6DDE5 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, #B0BEC5 0%, transparent 40%),
+                linear-gradient(135deg, #EEF1F4 0%, #D6DDE5 50%, #C5CDD5 100%);
+}
+
+body.mens-mode .nav {
+    background: rgba(245, 247, 250, 0.95);
+}
+
+body.mens-mode .search-overlay {
+    background: rgba(44, 62, 80, 0.95);
+}
+
+body.mens-mode .pickup-overlay {
+    background: rgba(44, 62, 80, 0.85);
+}
+
+body.mens-mode .salon-section {
+    background: linear-gradient(180deg, white 0%, #EEF1F4 100%);
+}
+
+body.mens-mode .newsletter-section {
+    background: #D6DDE5;
+}
+
+body.mens-mode .trust-badges {
+    background: #EEF1F4;
+}
+
+body.mens-mode .contact-link.phone {
+    background: #D6DDE5;
+    color: #2C3E50;
+}
+body.mens-mode .contact-link.phone:hover {
+    background: #2C3E50;
+    color: white;
+}
+
+/* Men's Mode Toggle Button */
+.mode-toggle-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.mens-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray-600);
+    background: transparent;
+    border: 2px solid var(--gray-300);
+    border-radius: 60px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mens-mode-btn:hover {
+    color: #2C3E50;
+    border-color: #2C3E50;
+    background: rgba(44, 62, 80, 0.05);
+}
+
+.mens-mode-btn.active {
+    color: white;
+    background: #2C3E50;
+    border-color: #2C3E50;
+}
+
+.mens-mode-btn.active:hover {
+    background: #3A5A7C;
+    border-color: #3A5A7C;
+}
+
+.mens-mode-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* Coming Soon placeholder for men's products */
+.mens-coming-soon {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.mens-coming-soon h3 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+}
+
+.mens-coming-soon p {
+    color: var(--gray-600);
+    font-size: 1.0625rem;
+    max-width: 450px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* Back to Women's link */
+.womens-mode-btn {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lavender-deep);
+    background: transparent;
+    border: 2px solid var(--lavender-deep);
+    border-radius: 60px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.womens-mode-btn:hover {
+    color: white;
+    background: var(--lavender-deep);
+}
+
+body.mens-mode .womens-mode-btn {
+    display: inline-flex;
+}
+
+body.mens-mode .mens-mode-btn {
+    color: white;
+    background: #2C3E50;
+    border-color: #2C3E50;
+}

@@ -99,6 +99,15 @@
             <h1 class="hero-title"><span>Elevate Your</span><span class="accent">Natural Beauty</span></h1>
             <p class="hero-description">Curated products for radiant hair, skin, and self-care rituals</p>
             <a href="shop.html" class="hero-cta">Shop Collection</a>
+            <div class="mode-toggle-container">
+                <button class="mens-mode-btn" onclick="toggleMensMode(true)" aria-label="Switch to men's collection">
+                    <svg viewBox="0 0 24 24"><path d="M9.5 11c1.93 0 3.5 1.57 3.5 3.5S11.43 18 9.5 18 6 16.43 6 14.5 7.57 11 9.5 11zm0-2C6.46 9 4 11.46 4 14.5S6.46 20 9.5 20s5.5-2.46 5.5-5.5c0-1.16-.36-2.24-.97-3.13L20 5.4V10h2V2h-8v2h4.6l-5.97 5.97A5.47 5.47 0 0 0 9.5 9z"/></svg>
+                    For Men
+                </button>
+                <button class="womens-mode-btn" onclick="toggleMensMode(false)">
+                    Back to Women's
+                </button>
+            </div>
         </div>
     </section>
 
@@ -197,34 +206,88 @@
 
     <script src="app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
+        // Men's mode toggle
+        function toggleMensMode(enable) {
+            document.body.classList.toggle('mens-mode', enable);
+            localStorage.setItem('grasshopper-mens-mode', enable ? 'true' : 'false');
+            updateHeroForMode(enable);
+            updateFeaturedForMode(enable);
+        }
+
+        function updateHeroForMode(isMens) {
+            const tagline = document.querySelector('.hero-tagline');
+            const title = document.querySelector('.hero-title');
+            const description = document.querySelector('.hero-description');
+            const shopCta = document.querySelector('.hero-cta');
+
+            if (isMens) {
+                tagline.textContent = 'Grooming & Style';
+                title.innerHTML = '<span>Elevate Your</span><span class="accent">Style</span>';
+                description.textContent = 'Premium grooming and style essentials for the modern man';
+                shopCta.textContent = 'Shop Collection';
+            } else {
+                tagline.textContent = 'Beauty & Wellness';
+                title.innerHTML = '<span>Elevate Your</span><span class="accent">Natural Beauty</span>';
+                description.textContent = 'Curated products for radiant hair, skin, and self-care rituals';
+                shopCta.textContent = 'Shop Collection';
+            }
+        }
+
+        function updateFeaturedForMode(isMens) {
             const grid = document.getElementById('featuredGrid');
-            if (grid) {
-                try {
-                    const products = await fetchProducts();
+            const sectionTag = document.querySelector('.featured .section-tag');
+            const sectionTitle = document.querySelector('.featured .section-title');
+            if (!grid) return;
 
-                    // Curated bestsellers across all brands
-                    const featuredNames = [
-                        'Olaplex No.3 Hair Perfector Take Home',
-                        'B&B Hairdresser\'s Invisible Oil',
-                        'Living Proof Perfect Hair Day (PhD) Dry Shampoo',
-                        'Ouai Wave Spray',
-                        'CW Dream Coat Supernatural Spray',
-                        'Olaplex No. 7 Bonding Oil'
-                    ];
+            if (isMens) {
+                sectionTag.textContent = 'Coming Soon';
+                sectionTitle.textContent = "Men's Collection";
+                grid.innerHTML = `
+                    <div class="mens-coming-soon">
+                        <h3>Men's Products Coming Soon</h3>
+                        <p>We're curating a premium collection of grooming and style products for men. Check back soon.</p>
+                    </div>
+                `;
+            } else {
+                sectionTag.textContent = 'Discover';
+                sectionTitle.textContent = 'Featured Products';
+                loadFeaturedProducts();
+            }
+        }
 
-                    const featured = featuredNames
-                        .map(name => products.find(p => p.name === name))
-                        .filter(Boolean);
+        async function loadFeaturedProducts() {
+            const grid = document.getElementById('featuredGrid');
+            if (!grid) return;
+            try {
+                const products = await fetchProducts();
+                const featuredNames = [
+                    'Olaplex No.3 Hair Perfector Take Home',
+                    'B&B Hairdresser\'s Invisible Oil',
+                    'Living Proof Perfect Hair Day (PhD) Dry Shampoo',
+                    'Ouai Wave Spray',
+                    'CW Dream Coat Supernatural Spray',
+                    'Olaplex No. 7 Bonding Oil'
+                ];
+                const featured = featuredNames
+                    .map(name => products.find(p => p.name === name))
+                    .filter(Boolean);
+                const displayProducts = featured.length >= 4 ? featured : products.slice(0, 6);
+                grid.innerHTML = displayProducts.map(p => createProductCard(p)).join('');
+            } catch (e) {
+                console.error('Error loading products:', e);
+                grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
+            }
+        }
 
-                    // Fall back to first 6 products if we can't find enough matches
-                    const displayProducts = featured.length >= 4 ? featured : products.slice(0, 6);
-
-                    grid.innerHTML = displayProducts.map(p => createProductCard(p)).join('');
-                } catch (e) {
-                    console.error('Error loading products:', e);
-                    grid.innerHTML = `<p class="error">Unable to load products. ${e.message || 'Please try again later.'}</p>`;
-                }
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check saved mode preference
+            const savedMode = localStorage.getItem('grasshopper-mens-mode') === 'true';
+            if (savedMode) {
+                document.body.classList.add('mens-mode');
+                updateHeroForMode(true);
+                updateFeaturedForMode(true);
+            } else {
+                await loadFeaturedProducts();
             }
         });
     </script>
