@@ -308,8 +308,6 @@ function updateCartUI() {
     if (cartTotal) cartTotal.textContent = `$${subtotal.toFixed(2)}`;
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
 
-    updateFreeShippingBar();
-
     if (cart.length === 0) {
         cartItems.innerHTML = '<p class="cart-empty">Your cart is empty</p>';
         return;
@@ -437,33 +435,6 @@ function closeMobileMenu() {
     document.body.style.overflow = '';
 }
 
-// ============================================
-// Free Shipping Bar
-// ============================================
-
-function updateFreeShippingBar() {
-    const bar = document.getElementById('freeShippingBar');
-    if (!bar) return;
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const threshold = 75;
-    if (cart.length === 0) {
-        bar.innerHTML = '';
-        return;
-    }
-    if (subtotal >= threshold) {
-        bar.innerHTML = `
-            <div class="shipping-progress-text earned">You've earned free shipping!</div>
-            <div class="shipping-progress-track"><div class="shipping-progress-fill" style="width:100%"></div></div>
-        `;
-    } else {
-        const remaining = (threshold - subtotal).toFixed(2);
-        const pct = Math.min((subtotal / threshold) * 100, 100);
-        bar.innerHTML = `
-            <div class="shipping-progress-text">You're $${remaining} away from free shipping!</div>
-            <div class="shipping-progress-track"><div class="shipping-progress-fill" style="width:${pct}%"></div></div>
-        `;
-    }
-}
 
 // ============================================
 // Back to Top

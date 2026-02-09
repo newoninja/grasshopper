@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping & Returns | The Grasshopper</title>
+    <meta name="description" content="Shipping and return policies for The Grasshopper - professional hair care products">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="shop-page">
+    <nav class="nav nav-light">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">The Grasshopper</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="shop.html" class="nav-link">Shop</a>
+            </div>
+            <div class="nav-actions">
+                <button class="search-toggle" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                <button class="cart-toggle" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="cart-count">0</span>
+                </button>
+                <button class="nav-hamburger" aria-label="Menu">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu-overlay"></div>
+    <div class="mobile-menu">
+        <button class="mobile-menu-close">&times;</button>
+        <a href="index.html" class="mobile-menu-link">Home</a>
+        <a href="shop.html" class="mobile-menu-link">Shop</a>
+        <a href="tel:8446215787" class="mobile-menu-link">(844) 621-5787</a>
+        <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="mobile-menu-link">Instagram</a>
+    </div>
+
+    <div class="search-overlay">
+        <div class="search-container">
+            <button class="search-close">&times;</button>
+            <form class="search-form" onsubmit="handleSearch(event)">
+                <input type="text" class="search-input" placeholder="Search products..." id="searchInput">
+                <button type="submit" class="search-submit">Search</button>
+            </form>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <div class="cart-overlay"></div>
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty</p></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="cart-line"><span>Shipping</span><span id="cartShipping">$0.00</span></div>
+                <div class="cart-total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+            </div>
+            <button class="pickup-check-btn" onclick="openPickupModal()" id="pickupCheckBtn">Check Local Pickup</button>
+            <button class="checkout-btn" id="checkoutBtn" disabled>Checkout with Shipping</button>
+        </div>
+    </aside>
+
+    <div class="pickup-overlay" onclick="closePickupModal()"></div>
+    <div class="pickup-modal">
+        <div class="pickup-content">
+            <button class="pickup-close" onclick="closePickupModal()">&times;</button>
+            <h2>Local Pickup</h2>
+            <p class="pickup-description">Check if you're in our local pickup area and save on shipping!</p>
+            <div class="pickup-form">
+                <input type="text" id="pickupZip" class="pickup-zip-input" placeholder="Enter your zip code" maxlength="5" />
+                <button class="pickup-submit-btn" onclick="checkPickupEligibility()">Check Availability</button>
+            </div>
+            <div id="pickupResult" class="pickup-result"></div>
+        </div>
+    </div>
+
+    <main class="policies-page">
+        <div class="policies-container">
+            <h1>Shipping & Returns</h1>
+
+            <section class="policy-section" id="shipping">
+                <h2>Shipping Policy</h2>
+                <p>We ship all orders within <strong>1-2 business days</strong> of receiving your order. Orders placed on weekends or holidays will be processed the next business day.</p>
+                <h3>Shipping Rates</h3>
+                <ul>
+                    <li>Shipping rates are calculated at checkout based on your location</li>
+                </ul>
+                <h3>Local Pickup</h3>
+                <p>Local pickup is available for customers in the Charlotte, NC area. You can check your eligibility during checkout by entering your zip code. We'll contact you within 24 hours to arrange pickup.</p>
+            </section>
+
+            <section class="policy-section" id="returns">
+                <h2>Returns & Exchanges</h2>
+                <p>We want you to love your products. If you're not satisfied with your purchase, please reach out to us.</p>
+                <ul>
+                    <li>Unopened products may be returned within <strong>30 days</strong> of purchase</li>
+                    <li>Products must be in their original, unused condition</li>
+                    <li>Please contact us at <a href="tel:8446215787">(844) 621-5787</a> to initiate a return</li>
+                </ul>
+                <p>For product recommendations or questions about which products are right for your hair, don't hesitate to reach out. D'yette is happy to help you find the perfect products.</p>
+            </section>
+
+            <section class="policy-section">
+                <h2>Questions?</h2>
+                <p>Contact us anytime:</p>
+                <ul>
+                    <li>Phone: <a href="tel:8446215787">(844) 621-5787</a></li>
+                    <li>Instagram: <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">@dyette_grasshopper</a></li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer footer-light">
+        <div class="footer-main">
+            <div class="footer-brand">
+                <span class="footer-logo">The Grasshopper</span>
+                <p class="footer-tagline">Professional hair care curated by a stylist with 32 years of experience</p>
+            </div>
+            <div class="footer-links">
+                <h4>Shop</h4>
+                <a href="shop.html">All Products</a>
+                <a href="index.html#about">About D'yette</a>
+            </div>
+            <div class="footer-links">
+                <h4>Contact</h4>
+                <a href="tel:8446215787">(844) 621-5787</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">Instagram</a>
+            </div>
+            <div class="footer-links">
+                <h4>Info</h4>
+                <a href="policies.html#shipping">Shipping Policy</a>
+                <a href="policies.html#returns">Returns</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 The Grasshopper. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
