@@ -63,8 +63,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 
 @media (max-width: 768px) {
-    .hai-nav-btn span { display: none; }
-    .hai-nav-btn { padding: 0.5rem; border-radius: 50%; width: 36px; height: 36px; justify-content: center; }
+    .hai-nav-btn { display: none; }
 }
 
 .search-toggle, .cart-toggle { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--gray-800); }
