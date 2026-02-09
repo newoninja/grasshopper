@@ -767,6 +767,9 @@ img { max-width: 100%; height: auto; display: block; }
 @media (max-width: 768px) {
     .newsletter-form { flex-direction: column; }
     .newsletter-btn { width: 100%; }
+    .pickup-form { flex-direction: column; }
+    .pickup-submit-btn { width: 100%; }
+    .pickup-modal { width: 95%; }
 }
 
 /* ============================================
