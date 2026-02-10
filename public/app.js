@@ -92,45 +92,10 @@ async function confirmPickup() {
     }
 
     pickupPhone = phone;
-
-    // Show processing state
-    const confirmBtn = document.querySelector('.confirm-pickup-btn');
-    const originalText = confirmBtn.textContent;
-    confirmBtn.textContent = 'Processing...';
-    confirmBtn.disabled = true;
-
-    try {
-        const items = cart.map(item => ({
-            variationId: item.variationId,
-            quantity: item.quantity,
-            name: item.name,
-            price: item.price
-        }));
-
-        const response = await fetch('/api/checkout-pickup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items, phone })
-        });
-
-        const data = await response.json();
-
-        if (data.checkoutUrl) {
-            // Redirect to Square checkout
-            window.location.href = data.checkoutUrl;
-        } else {
-            const errorMsg = data.error || 'Unable to create pickup order. Please try again.';
-            console.error('Pickup checkout error:', data);
-            alert(errorMsg);
-            confirmBtn.textContent = originalText;
-            confirmBtn.disabled = false;
-        }
-    } catch (error) {
-        console.error('Pickup checkout error:', error);
-        alert('Unable to process pickup order. Please try again.');
-        confirmBtn.textContent = originalText;
-        confirmBtn.disabled = false;
-    }
+    localStorage.setItem('grasshopper-pickup-phone', phone);
+    closePickupModal();
+    closeCart();
+    window.location.href = 'checkout.html?mode=pickup';
 }
 
 function openPickupModal() {
@@ -149,58 +114,34 @@ function closePickupModal() {
 
 async function createCheckout() {
     if (cart.length === 0) return;
-
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    checkoutBtn.textContent = 'Processing...';
-    checkoutBtn.disabled = true;
-
-    try {
-        const items = cart.map(item => ({
-            variationId: item.variationId,
-            quantity: item.quantity
-        }));
-
-        const response = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items })
-        });
-
-        const data = await response.json();
-
-        if (data.checkoutUrl) {
-            window.location.href = data.checkoutUrl;
-        } else {
-            alert('Unable to create checkout. Please try again.');
-            checkoutBtn.textContent = 'Checkout';
-            checkoutBtn.disabled = false;
-        }
-    } catch (error) {
-        console.error('Checkout error:', error);
-        alert('Checkout failed. Please try again.');
-        checkoutBtn.textContent = 'Checkout';
-        checkoutBtn.disabled = false;
-    }
+    closeCart();
+    window.location.href = 'checkout.html?mode=shipping';
 }
 
 async function buyNow(variationId) {
-    try {
-        const response = await fetch('/api/checkout-quick', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ variationId, quantity: 1 })
-        });
+    // Find product info for the quick buy item
+    const product = allProducts.find(p => {
+        if (p.variationId === variationId) return true;
+        return p.variations?.some(v => v.id === variationId);
+    });
 
-        const data = await response.json();
-        if (data.checkoutUrl) {
-            window.location.href = data.checkoutUrl;
-        } else {
-            alert('Unable to process. Please try again.');
-        }
-    } catch (error) {
-        console.error('Buy now error:', error);
+    if (!product) {
         alert('Unable to process. Please try again.');
+        return;
     }
+
+    const variation = product.variations?.find(v => v.id === variationId);
+    const quickItem = {
+        id: product.id,
+        variationId: variationId,
+        name: product.name + (variation ? ` - ${variation.name}` : ''),
+        price: variation ? variation.price : product.price,
+        imageUrl: product.imageUrl,
+        quantity: 1
+    };
+
+    localStorage.setItem('grasshopper-quick-buy', JSON.stringify(quickItem));
+    window.location.href = 'checkout.html?mode=quick';
 }
 
 // ============================================
