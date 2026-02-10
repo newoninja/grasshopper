@@ -13,3 +13,8 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+[[redirects]]
+  from = "/.well-known/apple-developer-merchantid-domain-association.txt"
+  to = "/.well-known/apple-developer-merchantid-domain-association"
+  status = 200
