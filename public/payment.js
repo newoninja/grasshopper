@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Square payments
     try {
         const config = await fetchConfig();
+        console.log('Square config loaded:', { applicationId: config.applicationId, locationId: config.locationId });
         await initializePayments(config, checkoutData);
     } catch (err) {
         console.error('Payment init error:', err);
@@ -339,7 +340,12 @@ function validateAddress() {
 
 async function initializePayments(config, data) {
     if (!window.Square) {
+        console.log('Square SDK not found, loading dynamically...');
         await loadScript('https://web.squarecdn.com/v1/square.js');
+    }
+
+    if (!window.Square) {
+        throw new Error('Square SDK failed to load');
     }
 
     payments = window.Square.payments(config.applicationId, config.locationId);
@@ -347,6 +353,7 @@ async function initializePayments(config, data) {
     // Initialize card
     card = await payments.card();
     await card.attach('#card-container');
+    console.log('Card form attached successfully');
 
     // Enable pay button
     const payBtn = document.getElementById('payButton');
