@@ -65,7 +65,13 @@ exports.handler = async (event) => {
                 },
                 checkout_options: {
                     allow_tipping: false,
-                    ask_for_shipping_address: false
+                    ask_for_shipping_address: false,
+                    accepted_payment_methods: {
+                        apple_pay: true,
+                        google_pay: true,
+                        cash_app_pay: false,
+                        afterpay_clearpay: false
+                    }
                 },
                 pre_populated_data: {
                     buyer_phone_number: formattedPhone

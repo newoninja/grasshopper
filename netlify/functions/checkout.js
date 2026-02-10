@@ -112,7 +112,13 @@ exports.handler = async (event) => {
                 },
                 checkout_options: {
                     allow_tipping: false,
-                    ask_for_shipping_address: true
+                    ask_for_shipping_address: true,
+                    accepted_payment_methods: {
+                        apple_pay: true,
+                        google_pay: true,
+                        cash_app_pay: false,
+                        afterpay_clearpay: false
+                    }
                 }
             })
         });
