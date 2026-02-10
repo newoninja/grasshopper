@@ -206,10 +206,16 @@ async function applyPromo() {
 
         if (data.valid) {
             appliedPromo = data;
+            // Calculate discount off the total (subtotal + shipping)
             const subtotal = checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+            const shippingEl = document.getElementById('checkoutShipping');
+            const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
+            const totalBeforeDiscount = Math.round(subtotal * 100) + shippingCents;
 
-            if (data.type === 'percent') {
-                discountCents = Math.round(subtotal * 100 * data.value / 100);
+            if (data.freeShipping) {
+                discountCents = shippingCents;
+            } else if (data.type === 'percent') {
+                discountCents = Math.round(totalBeforeDiscount * data.value / 100);
             } else {
                 discountCents = data.value;
             }
