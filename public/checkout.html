@@ -49,10 +49,24 @@
                     <div class="checkout-items" id="checkoutItems">
                         <div class="loading-spinner"><div class="spinner"></div></div>
                     </div>
+
+                    <!-- Promo Code -->
+                    <div class="checkout-promo">
+                        <div class="promo-input-row">
+                            <input type="text" id="promoInput" class="promo-input" placeholder="Promo code">
+                            <button id="promoApplyBtn" class="promo-apply-btn" onclick="applyPromo()">Apply</button>
+                        </div>
+                        <p id="promoMessage" class="promo-message"></p>
+                    </div>
+
                     <div class="checkout-totals">
                         <div class="checkout-line">
                             <span>Subtotal</span>
                             <span id="checkoutSubtotal">$0.00</span>
+                        </div>
+                        <div class="checkout-line" id="discountLine" style="display: none;">
+                            <span>Discount</span>
+                            <span id="checkoutDiscount" class="discount-amount">-$0.00</span>
                         </div>
                         <div class="checkout-line">
                             <span>Shipping</span>
@@ -67,6 +81,64 @@
 
                 <!-- Payment Section -->
                 <div class="checkout-payment">
+                    <!-- Shipping Address (hidden for pickup) -->
+                    <div id="addressSection">
+                        <h2 class="checkout-section-title">Shipping Address</h2>
+                        <div class="checkout-address-form">
+                            <div class="address-row">
+                                <div class="address-field">
+                                    <label for="addrFirstName">First Name</label>
+                                    <input type="text" id="addrFirstName" required>
+                                </div>
+                                <div class="address-field">
+                                    <label for="addrLastName">Last Name</label>
+                                    <input type="text" id="addrLastName" required>
+                                </div>
+                            </div>
+                            <div class="address-field">
+                                <label for="addrEmail">Email</label>
+                                <input type="email" id="addrEmail" required>
+                            </div>
+                            <div class="address-field">
+                                <label for="addrStreet">Street Address</label>
+                                <input type="text" id="addrStreet" required>
+                            </div>
+                            <div class="address-field">
+                                <label for="addrApt">Apt / Suite (optional)</label>
+                                <input type="text" id="addrApt">
+                            </div>
+                            <div class="address-row address-row-3">
+                                <div class="address-field">
+                                    <label for="addrCity">City</label>
+                                    <input type="text" id="addrCity" required>
+                                </div>
+                                <div class="address-field address-field-sm">
+                                    <label for="addrState">State</label>
+                                    <select id="addrState" required>
+                                        <option value="">--</option>
+                                        <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
+                                        <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option>
+                                        <option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option><option value="ID">ID</option>
+                                        <option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option><option value="KS">KS</option>
+                                        <option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option><option value="MD">MD</option>
+                                        <option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option><option value="MS">MS</option>
+                                        <option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option><option value="NV">NV</option>
+                                        <option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option><option value="NY">NY</option>
+                                        <option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option><option value="OK">OK</option>
+                                        <option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option><option value="SC">SC</option>
+                                        <option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option><option value="UT">UT</option>
+                                        <option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option><option value="WV">WV</option>
+                                        <option value="WI">WI</option><option value="WY">WY</option><option value="DC">DC</option>
+                                    </select>
+                                </div>
+                                <div class="address-field address-field-sm">
+                                    <label for="addrZip">ZIP</label>
+                                    <input type="text" id="addrZip" maxlength="5" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <h2 class="checkout-section-title">Payment</h2>
 
                     <!-- Wallet Buttons (Apple Pay / Google Pay) -->

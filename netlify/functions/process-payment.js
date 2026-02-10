@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { sourceId, items, orderType, phone, totalAmount } = JSON.parse(event.body);
+        const { sourceId, items, orderType, phone, totalAmount, shippingAddress, promoCode, discountCents } = JSON.parse(event.body);
 
         if (!sourceId || !items || !items.length || !orderType) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -104,11 +104,49 @@ exports.handler = async (event) => {
             line_items: lineItems
         };
 
+        // Add service charges (shipping and discount)
+        const serviceCharges = [];
+
         if (shippingAmount > 0) {
-            orderBody.service_charges = [{
+            serviceCharges.push({
                 name: 'Shipping',
                 amount_money: { amount: shippingAmount, currency: 'USD' },
                 calculation_phase: 'SUBTOTAL_PHASE'
+            });
+        }
+
+        if (serviceCharges.length > 0) {
+            orderBody.service_charges = serviceCharges;
+        }
+
+        // Add discount if promo code was applied
+        if (discountCents && discountCents > 0) {
+            orderBody.discounts = [{
+                name: promoCode || 'Discount',
+                amount_money: { amount: discountCents, currency: 'USD' },
+                scope: 'ORDER'
+            }];
+        }
+
+        // Attach shipping address to the order
+        if (shippingAddress && orderType !== 'pickup') {
+            orderBody.fulfillments = [{
+                type: 'SHIPMENT',
+                state: 'PROPOSED',
+                shipment_details: {
+                    recipient: {
+                        display_name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+                        email_address: shippingAddress.email,
+                        address: {
+                            address_line_1: shippingAddress.street,
+                            address_line_2: shippingAddress.apt || undefined,
+                            locality: shippingAddress.city,
+                            administrative_district_level_1: shippingAddress.state,
+                            postal_code: shippingAddress.zip,
+                            country: 'US'
+                        }
+                    }
+                }
             }];
         }
 
@@ -192,6 +230,7 @@ exports.handler = async (event) => {
                         value: `New Local Pickup Order — PAID
 
 Customer Phone: ${phone}
+Customer Email: ${shippingAddress?.email || 'Not provided'}
 
 Items:
 ${itemsList}

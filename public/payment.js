@@ -7,6 +7,8 @@ let card = null;
 let applePay = null;
 let googlePay = null;
 let checkoutData = null;
+let discountCents = 0;
+let appliedPromo = null;
 
 // ============================================
 // Initialize
@@ -22,6 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!checkoutData || !checkoutData.items.length) {
         showError('Your cart is empty. Please add items before checking out.');
         return;
+    }
+
+    // Hide address section for pickup
+    if (mode === 'pickup') {
+        document.getElementById('addressSection').style.display = 'none';
     }
 
     renderOrderSummary(checkoutData);
@@ -97,14 +104,19 @@ function renderOrderSummary(data) {
         return;
     }
 
-    container.innerHTML = data.items.map(item => `
+    container.innerHTML = data.items.map((item, index) => `
         <div class="checkout-item">
             <div class="checkout-item-image">
                 ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}">` : ''}
             </div>
             <div class="checkout-item-info">
                 <p class="checkout-item-name">${escapeHtml(item.name)}</p>
-                <p class="checkout-item-qty">Qty: ${item.quantity || 1}</p>
+                <div class="checkout-item-controls">
+                    <button class="checkout-qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                    <span class="checkout-item-qty">${item.quantity || 1}</span>
+                    <button class="checkout-qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                    <button class="checkout-remove-btn" onclick="removeItem(${index})">Remove</button>
+                </div>
             </div>
             <p class="checkout-item-price">$${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
         </div>
@@ -114,10 +126,113 @@ function renderOrderSummary(data) {
     subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
 }
 
+// ============================================
+// Cart Editing on Checkout
+// ============================================
+
+function changeQty(index, delta) {
+    const item = checkoutData.items[index];
+    if (!item) return;
+
+    item.quantity = (item.quantity || 1) + delta;
+    if (item.quantity <= 0) {
+        removeItem(index);
+        return;
+    }
+
+    syncCartToStorage();
+    renderOrderSummary(checkoutData);
+    recalcAndUpdateTotal();
+}
+
+function removeItem(index) {
+    checkoutData.items.splice(index, 1);
+
+    if (checkoutData.items.length === 0) {
+        showError('Your cart is empty. Please add items before checking out.');
+        return;
+    }
+
+    syncCartToStorage();
+    renderOrderSummary(checkoutData);
+    recalcAndUpdateTotal();
+}
+
+function syncCartToStorage() {
+    if (checkoutData.mode === 'quick') {
+        localStorage.setItem('grasshopper-quick-buy', JSON.stringify(checkoutData.items[0]));
+    } else {
+        localStorage.setItem('grasshopper-cart', JSON.stringify(checkoutData.items));
+    }
+}
+
+async function recalcAndUpdateTotal() {
+    if (checkoutData.mode !== 'pickup') {
+        await calculateShipping(checkoutData.items);
+    } else {
+        updateTotal();
+    }
+}
+
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ============================================
+// Promo Code
+// ============================================
+
+async function applyPromo() {
+    const input = document.getElementById('promoInput');
+    const msg = document.getElementById('promoMessage');
+    const code = input.value.trim().toUpperCase();
+
+    if (!code) {
+        msg.textContent = 'Please enter a promo code';
+        msg.className = 'promo-message promo-error';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/validate-promo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
+
+        const data = await response.json();
+
+        if (data.valid) {
+            appliedPromo = data;
+            const subtotal = checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+
+            if (data.type === 'percent') {
+                discountCents = Math.round(subtotal * 100 * data.value / 100);
+            } else {
+                discountCents = data.value;
+            }
+
+            const discountLine = document.getElementById('discountLine');
+            discountLine.style.display = 'flex';
+            document.getElementById('checkoutDiscount').textContent = `-$${(discountCents / 100).toFixed(2)}`;
+
+            msg.textContent = data.message || `Code "${code}" applied!`;
+            msg.className = 'promo-message promo-success';
+            input.disabled = true;
+            document.getElementById('promoApplyBtn').textContent = 'Applied';
+            document.getElementById('promoApplyBtn').disabled = true;
+
+            updateTotal();
+        } else {
+            msg.textContent = data.message || 'Invalid promo code';
+            msg.className = 'promo-message promo-error';
+        }
+    } catch (err) {
+        msg.textContent = 'Unable to validate code. Try again.';
+        msg.className = 'promo-message promo-error';
+    }
 }
 
 // ============================================
@@ -159,9 +274,57 @@ function updateTotal() {
     const subtotal = checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
-    const total = subtotal + (shippingCents / 100);
+    const subtotalCents = Math.round(subtotal * 100);
+    const totalCents = subtotalCents + shippingCents - discountCents;
+    const total = Math.max(0, totalCents) / 100;
 
     document.getElementById('checkoutTotal').textContent = `$${total.toFixed(2)}`;
+}
+
+// ============================================
+// Address Validation
+// ============================================
+
+function getShippingAddress() {
+    if (checkoutData.mode === 'pickup') return null;
+
+    const firstName = document.getElementById('addrFirstName').value.trim();
+    const lastName = document.getElementById('addrLastName').value.trim();
+    const email = document.getElementById('addrEmail').value.trim();
+    const street = document.getElementById('addrStreet').value.trim();
+    const apt = document.getElementById('addrApt').value.trim();
+    const city = document.getElementById('addrCity').value.trim();
+    const state = document.getElementById('addrState').value;
+    const zip = document.getElementById('addrZip').value.trim();
+
+    return { firstName, lastName, email, street, apt, city, state, zip };
+}
+
+function validateAddress() {
+    if (checkoutData.mode === 'pickup') return true;
+
+    const addr = getShippingAddress();
+    const missing = [];
+    if (!addr.firstName) missing.push('first name');
+    if (!addr.lastName) missing.push('last name');
+    if (!addr.email) missing.push('email');
+    if (!addr.street) missing.push('street address');
+    if (!addr.city) missing.push('city');
+    if (!addr.state) missing.push('state');
+    if (!addr.zip || addr.zip.length !== 5) missing.push('ZIP code');
+
+    if (missing.length) {
+        showPaymentError('Please fill in: ' + missing.join(', '));
+        return false;
+    }
+
+    // Basic email check
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr.email)) {
+        showPaymentError('Please enter a valid email address');
+        return false;
+    }
+
+    return true;
 }
 
 // ============================================
@@ -170,7 +333,6 @@ function updateTotal() {
 
 async function initializePayments(config, data) {
     if (!window.Square) {
-        // Load SDK dynamically
         await loadScript('https://web.squarecdn.com/v1/square.js');
     }
 
@@ -189,13 +351,8 @@ async function initializePayments(config, data) {
     try {
         const paymentRequest = buildPaymentRequest(data);
         applePay = await payments.applePay(paymentRequest);
-        const applePayBtn = document.getElementById('apple-pay-button');
-        applePayBtn.innerHTML = '';
-        applePayBtn.style.display = 'block';
-        // Square SDK renders its own Apple Pay button
-        applePayBtn.addEventListener('click', async () => {
-            await handleWalletPayment(applePay);
-        });
+        await applePay.attach('#apple-pay-button');
+        document.getElementById('apple-pay-button').style.display = 'block';
         showWalletButtons();
     } catch (e) {
         console.log('Apple Pay not available:', e.message);
@@ -217,7 +374,9 @@ function buildPaymentRequest(data) {
     const subtotal = data.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
-    const total = (subtotal + (shippingCents / 100)).toFixed(2);
+    const subtotalCents = Math.round(subtotal * 100);
+    const totalCents = subtotalCents + shippingCents - discountCents;
+    const total = (Math.max(0, totalCents) / 100).toFixed(2);
 
     return payments.paymentRequest({
         countryCode: 'US',
@@ -238,9 +397,11 @@ function showWalletButtons() {
 // ============================================
 
 async function handlePayment() {
-    const payBtn = document.getElementById('payButton');
-    setPayButtonLoading(true);
     hidePaymentError();
+
+    if (!validateAddress()) return;
+
+    setPayButtonLoading(true);
 
     try {
         const result = await card.tokenize();
@@ -259,8 +420,10 @@ async function handlePayment() {
 }
 
 async function handleWalletPayment(walletMethod) {
-    setPayButtonLoading(true);
     hidePaymentError();
+
+    // For wallet payments, address validation is optional since wallets provide address
+    setPayButtonLoading(true);
 
     try {
         const result = await walletMethod.tokenize();
@@ -279,20 +442,33 @@ async function handleWalletPayment(walletMethod) {
 
 async function processPayment(sourceId) {
     try {
+        const address = getShippingAddress();
+
+        const body = {
+            sourceId: sourceId,
+            items: checkoutData.items.map(item => ({
+                variationId: item.variationId,
+                quantity: item.quantity || 1,
+                name: item.name,
+                price: item.price
+            })),
+            orderType: checkoutData.mode,
+            phone: checkoutData.phone || null
+        };
+
+        if (address) {
+            body.shippingAddress = address;
+        }
+
+        if (appliedPromo) {
+            body.promoCode = appliedPromo.code;
+            body.discountCents = discountCents;
+        }
+
         const response = await fetch('/api/process-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sourceId: sourceId,
-                items: checkoutData.items.map(item => ({
-                    variationId: item.variationId,
-                    quantity: item.quantity || 1,
-                    name: item.name,
-                    price: item.price
-                })),
-                orderType: checkoutData.mode,
-                phone: checkoutData.phone || null
-            })
+            body: JSON.stringify(body)
         });
 
         const data = await response.json();
@@ -364,11 +540,9 @@ function showError(message) {
 }
 
 function clearCheckoutData() {
-    // Clear cart for shipping/pickup modes
     if (checkoutData.mode !== 'quick') {
         localStorage.removeItem('grasshopper-cart');
     }
-    // Clear quick buy data
     localStorage.removeItem('grasshopper-quick-buy');
     localStorage.removeItem('grasshopper-pickup-phone');
 }
