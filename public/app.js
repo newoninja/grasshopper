@@ -269,7 +269,7 @@ function updateCartUI() {
     if (!cartItems) return;
 
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const subtotal = cart.reduce((sum, item) => sum + (salePrice(item.price) * item.quantity), 0);
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     if (cartCount) {
         cartCount.textContent = totalItems;
