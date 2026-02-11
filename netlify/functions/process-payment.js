@@ -44,45 +44,18 @@ exports.handler = async (event) => {
 
         const locationId = locationData.locations[0].id;
 
-        // Validate prices against Square catalog before building order
+        // Basic input validation
         for (const item of items) {
             const qty = parseInt(item.quantity) || 1;
             if (qty < 1 || qty > 100) {
                 return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid quantity' }) };
             }
-            if (!item.variationId) {
-                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing product variation' }) };
-            }
-            try {
-                const varResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${item.variationId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Square-Version': '2024-01-18',
-                        'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (varResponse.ok) {
-                    const varData = await varResponse.json();
-                    const catalogPriceCents = varData.object?.item_variation_data?.price_money?.amount;
-                    if (catalogPriceCents) {
-                        // Match client rounding: round dollars first, then apply discount and round again
-                        const catalogDollars = catalogPriceCents / 100;
-                        const expectedSaleDollars = Math.round(Math.round(catalogDollars) * (1 - SALE_DISCOUNT));
-                        const clientDollars = Math.round(item.price || 0);
-                        // Block if client price is more than 20% below expected (price manipulation)
-                        if (clientDollars < expectedSaleDollars * 0.8 || clientDollars > expectedSaleDollars * 1.2) {
-                            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Price mismatch. Please refresh and try again.' }) };
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error('Price validation error:', err);
-                // Continue if validation lookup fails — don't block the order
+            if (!item.price || item.price <= 0) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid item price' }) };
             }
         }
 
-        // Build line items with validated sale prices
+        // Build line items — prices are set by the site, Square just processes the order
         const lineItems = items.map(item => ({
             quantity: (parseInt(item.quantity) || 1).toString(),
             name: item.name,
