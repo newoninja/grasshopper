@@ -100,10 +100,10 @@
 
     <section class="hero">
         <div class="hero-content">
-            <p class="hero-tagline">Beauty & Wellness</p>
-            <h1 class="hero-title"><span>Elevate Your</span><span class="accent">Natural Beauty</span></h1>
-            <p class="hero-description">Curated products for radiant hair, skin, and self-care rituals</p>
-            <a href="shop.html" class="hero-cta">Shop Collection</a>
+            <h1 class="hero-title"><span>Salon-Grade Hair Care,</span><span class="accent">Shipped to Your Door</span></h1>
+            <p class="hero-description">The same Olaplex, Bumble and Bumble, and Living Proof your stylist uses — hand-picked by a pro with 32 years behind the chair.</p>
+            <a href="shop.html" class="hero-cta">Shop Bestsellers</a>
+            <a href="hair-analysis.html" class="hero-secondary-cta">or get your hair analyzed free →</a>
             <div class="mode-toggle-container">
                 <button class="mens-mode-btn" onclick="toggleMensMode(true)" aria-label="Switch to men's collection">
                     <svg viewBox="0 0 24 24"><path d="M9.5 11c1.93 0 3.5 1.57 3.5 3.5S11.43 18 9.5 18 6 16.43 6 14.5 7.57 11 9.5 11zm0-2C6.46 9 4 11.46 4 14.5S6.46 20 9.5 20s5.5-2.46 5.5-5.5c0-1.16-.36-2.24-.97-3.13L20 5.4V10h2V2h-8v2h4.6l-5.97 5.97A5.47 5.47 0 0 0 9.5 9z"/></svg>
@@ -116,70 +116,71 @@
         </div>
     </section>
 
-    <section class="trust-bar">
-        <div class="trust-bar-container">
-            <div class="trust-bar-item">
-                <span class="trust-bar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-                <span>Secure Checkout</span>
-            </div>
-            <div class="trust-bar-item">
-                <span class="trust-bar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
-                <span>Ships in 1-2 Business Days</span>
-            </div>
-            <div class="trust-bar-item">
-                <span class="trust-bar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
-                <span>Local Pickup in Charlotte, NC</span>
-            </div>
-            <div class="trust-bar-item">
-                <span class="trust-bar-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-                <span>30-Day Returns</span>
-            </div>
+    <section class="brand-bar">
+        <div class="brand-bar-container">
+            <span class="brand-bar-item">Olaplex</span>
+            <span class="brand-bar-sep">&middot;</span>
+            <span class="brand-bar-item">Bumble and Bumble</span>
+            <span class="brand-bar-sep">&middot;</span>
+            <span class="brand-bar-item">Living Proof</span>
+            <span class="brand-bar-sep">&middot;</span>
+            <span class="brand-bar-item">OUAI</span>
+            <span class="brand-bar-sep">&middot;</span>
+            <span class="brand-bar-item">Color Wow</span>
         </div>
     </section>
 
     <section class="featured">
         <div class="section-header">
-            <p class="section-tag">Discover</p>
-            <h2 class="section-title">Featured Products</h2>
+            <h2 class="section-title">Bestsellers</h2>
+            <p class="section-subtitle">The products our clients keep coming back for.</p>
         </div>
         <div class="featured-grid" id="featuredGrid"></div>
-        <div class="featured-cta"><a href="shop.html" class="view-all-btn">View All Products →</a></div>
-    </section>
-
-    <section class="salon-section">
-        <h2 class="salon-title">The Grasshopper</h2>
-        <div class="salon-image"><img src="site-photo.png" alt="The Grasshopper Salon"></div>
+        <div class="featured-cta"><a href="shop.html" class="view-all-btn-full">View All Products →</a></div>
     </section>
 
     <section class="ha-promo-section">
         <div class="ha-promo-content">
-            <p class="ha-promo-tag">New — AI-Powered</p>
-            <h2 class="ha-promo-title">Get Your Personalized Hair Analysis</h2>
-            <p class="ha-promo-desc">Upload a photo of your hair and get expert-level analysis with personalized product recommendations — powered by AI and D'yette's 32 years of styling expertise.</p>
-            <a href="hair-analysis.html" class="ha-promo-cta">Try Hair Analysis</a>
+            <h2 class="ha-promo-title">Not Sure What Your Hair Needs?</h2>
+            <p class="ha-promo-desc">Upload a photo. Get personalized product picks in 30 seconds.</p>
+            <a href="hair-analysis.html" class="ha-promo-cta">Try It Free →</a>
         </div>
     </section>
 
-    <section class="trust-badges">
-        <div class="trust-badges-container">
-            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="D'yette has been a professional stylist in Charlotte, NC since 1994 — over three decades of expertise in cutting, coloring, and styling.">
-                <span class="trust-icon">✦</span>
-                <span class="trust-text">32 Years Experience</span>
-            </button>
-            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="Trained at the prestigious Vidal Sassoon Academy in London, known worldwide for precision cutting and pioneering techniques in modern hairstyling.">
-                <span class="trust-icon">✦</span>
-                <span class="trust-text">Vidal Sassoon Trained</span>
-            </button>
-            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="Achieved Redken's professional hair color certification after working backstage with Redken for over ten years — a mark of advanced color expertise.">
-                <span class="trust-icon">✦</span>
-                <span class="trust-text">Redken Certified Colorist</span>
-            </button>
-            <button class="trust-badge" onclick="toggleBadge(this)" data-detail="Every product in the shop is hand-picked by D'yette — the same salon-quality brands she trusts and uses on her clients every day.">
-                <span class="trust-icon">✦</span>
-                <span class="trust-text">Salon Professional Products</span>
-            </button>
+    <section class="why-buy">
+        <div class="why-buy-grid">
+            <div class="why-buy-item">
+                <div class="why-buy-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <h3>Stylist-Picked</h3>
+                <p>Every product hand-selected by D'yette, a stylist with 32 years behind the chair. Trained at Vidal Sassoon London. Redken certified colorist.</p>
+            </div>
+            <div class="why-buy-item">
+                <div class="why-buy-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                </div>
+                <h3>Same Products, Better Price</h3>
+                <p>Salon-grade brands without the salon markup. Ships in 1-2 business days.</p>
+            </div>
+            <div class="why-buy-item">
+                <div class="why-buy-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                </div>
+                <h3>Not Sure? We'll Help</h3>
+                <p>Call D'yette directly at <a href="tel:8446215787">(844) 621-5787</a> or try our <a href="hair-analysis.html">free AI hair analysis</a>.</p>
+            </div>
         </div>
-        <div class="trust-detail-panel" id="trustDetailPanel"></div>
+    </section>
+
+    <section class="salon-section">
+        <div class="salon-compact">
+            <img src="site-photo.png" alt="The Grasshopper Salon in Charlotte, NC" loading="lazy">
+            <div class="salon-overlay">
+                <h2>Visit Us in Charlotte, NC</h2>
+                <a href="tel:8446215787" class="salon-phone">(844) 621-5787</a>
+            </div>
+        </div>
     </section>
 
     <section class="about-section" id="about">
@@ -187,10 +188,12 @@
             <div class="about-image"><img src="about-me.jpg" alt="D'yette Spain"></div>
             <div class="about-text">
                 <h2>Meet D'yette</h2>
-                <p>D'yette Spain has been a stylist in Charlotte, NC, for thirty-two years. She began her career at Carmen Carmen in 1994 and trained at Vidal Sassoon in London. She worked backstage for Redken for over ten years and achieved Redken's hair color certification. Her passion and drive have taken her from mentee to salon owner and world class stylist who serves as an advisor and confidant for each client.</p>
-                <p>She provides expert advice on product selection, hair care, and style and supports each client's unique beauty and wellness. Browse her curated collection of professional hair care products — the same ones she trusts and uses in her salon every day. Questions about products or want to book an appointment? She'd love to hear from you.</p>
-                <div class="contact-info">
+                <p>D'yette Spain has been behind the chair for 32 years. Trained at Vidal Sassoon London, certified Redken colorist, and salon owner in Charlotte, NC. Every product in this shop is one she uses on her own clients.</p>
+                <div class="about-actions">
+                    <a href="about.html" class="about-read-more">Read Her Full Story →</a>
                     <a href="tel:8446215787" class="contact-link phone">(844) 621-5787</a>
+                </div>
+                <div class="contact-info">
                     <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" class="contact-link instagram">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                         @dyette_grasshopper
@@ -202,19 +205,37 @@
 
     <section class="newsletter-section">
         <div class="newsletter-content">
-            <h2>Stay in the Loop</h2>
-            <p>Get styling tips, new product arrivals, and exclusive offers delivered to your inbox.</p>
+            <h2>Get 20% Off — New Site Launch Special</h2>
+            <p>Sign up for our email list and get 20% off your first order. Plus new arrivals and styling tips from D'yette.</p>
             <form class="newsletter-form" name="newsletter" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="newsletterForm">
                 <input type="hidden" name="form-name" value="newsletter">
                 <p class="hidden" style="display:none"><input name="bot-field"></p>
                 <input type="email" name="email" placeholder="Enter your email" required class="newsletter-input">
-                <button type="submit" class="newsletter-btn">Subscribe</button>
+                <button type="submit" class="newsletter-btn">Get 20% Off</button>
             </form>
-            <p class="newsletter-success" id="newsletterSuccess" style="display:none">Thanks for subscribing! We'll keep you in the loop.</p>
+            <p class="newsletter-success" id="newsletterSuccess" style="display:none">You're in! Check your email for your 20% off code.</p>
         </div>
     </section>
 
     <footer class="footer">
+        <div class="footer-trust-bar">
+            <div class="footer-trust-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Secure Checkout</span>
+            </div>
+            <div class="footer-trust-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                <span>Ships 1-2 Days</span>
+            </div>
+            <div class="footer-trust-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                <span>Local Pickup</span>
+            </div>
+            <div class="footer-trust-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>30-Day Returns</span>
+            </div>
+        </div>
         <div class="footer-main">
             <div class="footer-brand">
                 <span class="footer-logo">The Grasshopper</span>
@@ -224,6 +245,7 @@
                 <h4>Shop</h4>
                 <a href="shop.html">All Products</a>
                 <a href="about.html">About D'yette</a>
+                <a href="hair-analysis.html">Hair Analysis</a>
             </div>
             <div class="footer-links">
                 <h4>Contact</h4>
@@ -244,21 +266,6 @@
 
     <script src="app.js"></script>
     <script>
-        // Trust badge expand/collapse
-        function toggleBadge(el) {
-            const panel = document.getElementById('trustDetailPanel');
-            const wasOpen = el.classList.contains('open');
-            document.querySelectorAll('.trust-badge.open').forEach(b => b.classList.remove('open'));
-            if (wasOpen) {
-                panel.classList.remove('visible');
-                panel.textContent = '';
-            } else {
-                el.classList.add('open');
-                panel.textContent = el.dataset.detail;
-                panel.classList.add('visible');
-            }
-        }
-
         // Men's mode toggle
         function toggleMensMode(enable) {
             document.body.classList.toggle('mens-mode', enable);
@@ -268,37 +275,34 @@
         }
 
         function updateHeroForMode(isMens) {
-            const tagline = document.querySelector('.hero-tagline');
             const title = document.querySelector('.hero-title');
             const description = document.querySelector('.hero-description');
             const shopCta = document.querySelector('.hero-cta');
+            const secondaryCta = document.querySelector('.hero-secondary-cta');
 
             if (isMens) {
-                tagline.textContent = 'Grooming & Style';
-                title.innerHTML = '<span>Elevate Your</span><span class="accent">Style</span>';
-                description.textContent = 'Premium grooming and style essentials for the modern man';
-                shopCta.textContent = 'Shop Collection';
+                title.innerHTML = '<span>Premium Grooming,</span><span class="accent">Shipped to Your Door</span>';
+                description.textContent = 'The same quality grooming products your barber uses — hand-picked by a pro with 32 years behind the chair.';
+                shopCta.textContent = 'Shop Men\'s';
+                if (secondaryCta) secondaryCta.style.display = 'none';
             } else {
-                tagline.textContent = 'Beauty & Wellness';
-                title.innerHTML = '<span>Elevate Your</span><span class="accent">Natural Beauty</span>';
-                description.textContent = 'Curated products for radiant hair, skin, and self-care rituals';
-                shopCta.textContent = 'Shop Collection';
+                title.innerHTML = '<span>Salon-Grade Hair Care,</span><span class="accent">Shipped to Your Door</span>';
+                description.textContent = 'The same Olaplex, Bumble and Bumble, and Living Proof your stylist uses — hand-picked by a pro with 32 years behind the chair.';
+                shopCta.textContent = 'Shop Bestsellers';
+                if (secondaryCta) secondaryCta.style.display = '';
             }
         }
 
         function updateFeaturedForMode(isMens) {
             const grid = document.getElementById('featuredGrid');
-            const sectionTag = document.querySelector('.featured .section-tag');
             const sectionTitle = document.querySelector('.featured .section-title');
             if (!grid) return;
 
             if (isMens) {
-                sectionTag.textContent = 'Discover';
-                sectionTitle.textContent = "Men's Collection";
+                sectionTitle.textContent = "Men's Bestsellers";
                 loadMensFeaturedProducts();
             } else {
-                sectionTag.textContent = 'Discover';
-                sectionTitle.textContent = 'Featured Products';
+                sectionTitle.textContent = 'Bestsellers';
                 loadFeaturedProducts();
             }
         }
