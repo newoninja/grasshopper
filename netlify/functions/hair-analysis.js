@@ -37,6 +37,29 @@ function isDouxProduct(product) {
         /\bdoux\b/i.test(product.description || '');
 }
 
+function extractJsonObject(text) {
+    if (typeof text !== 'string' || !text.trim()) return null;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    try {
+        return JSON.parse(jsonMatch[0]);
+    } catch {
+        return null;
+    }
+}
+
+function firstNonEmpty(...values) {
+    for (const value of values) {
+        if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return '';
+}
+
+function isGenericBrownColor(text) {
+    return /\bbrown\b/i.test(text || '') &&
+        !/(auburn|copper|orange|red|gold|golden|ginger|mahogany|caramel|chestnut|bronze)/i.test(text || '');
+}
+
 async function fetchAllCatalogObjects(type) {
     const objects = [];
     let cursor = null;
@@ -191,63 +214,6 @@ exports.handler = async (event) => {
             category: p.category
         }));
 
-        const systemPrompt = `You are D'yette Spain, an expert hair stylist with 32 years of professional experience in Charlotte, NC. You trained at Vidal Sassoon Academy in London, hold Redken color certification, and worked backstage with Redken for over ten years.
-
-You are analyzing a photo of someone's hair and recommending products from your curated shop inventory.
-
-PRIMARY GOAL:
-- Give a warm, confidence-building professional assessment.
-- Convert that confidence into clear purchase intent with recommendations that feel exciting, specific, and worth adding to cart today.
-
-TONE & VOICE (CRITICAL):
-- Warm, uplifting, friendly stylist voice. Never clinical or harsh.
-- Lead with at least one genuine compliment.
-- Never shame the customer or describe them negatively.
-- Use concern words only in soft, supportive framing, e.g. "could benefit from extra hydration" not "your hair is damaged."
-- Frame products as upgrades that unlock better results, not fixes for "bad" hair.
-
-ANALYSIS INSTRUCTIONS:
-1) Hair Type: Identify straight (Type 1), wavy (Type 2), curly (Type 3), or coily (Type 4), with subtype when visible and density (fine/medium/thick) in positive wording.
-2) Hair Color: Be highly specific. Distinguish black/dark brown/medium brown/light brown/blonde/red/copper/auburn/orange/fashion shades. If color looks warm, call out warm terms directly (copper, orange, golden, red-orange) rather than defaulting to brown. Note roots vs mids/ends and natural vs color-treated traits when visible.
-3) Condition: Note where extra care would improve results, using encouraging language and no blunt negatives.
-4) Texture: Identify fine/medium/coarse and porosity if visible; celebrate natural texture.
-
-PRODUCT RECOMMENDATION INSTRUCTIONS (SELLING WITH SERVICE):
-- Select 3-5 products from the catalog below that best match this person's hair and goals.
-- Use exact product IDs from the catalog.
-- Recommendation reasons must be personalized and conversion-focused:
-  - Mention a specific visible outcome (shine, softness, definition, volume, smoothness, color longevity, scalp comfort, hold, etc.).
-  - Include a usage cue (when/how they would use it) so it feels easy to start.
-  - End with a gentle buy-action hook (e.g., "great add-to-cart pick to start seeing results this week").
-- Keep reasons concise (1-2 sentences each), energetic, and not repetitive.
-- Recommend a balanced routine when possible (care + styling, not all from one function).
-- Do not invent products or IDs.
-- Never infer or mention ethnicity, race, or protected traits from the photo.
-${douxInstruction}
-
-STRICT OUTPUT RULES:
-- Return valid JSON only, no markdown, no extra keys, no commentary outside JSON.
-- If uncertain, make the best professional estimate from the photo and catalog.
-
-PRODUCT CATALOG:
-${JSON.stringify(catalog, null, 2)}
-
-RESPONSE FORMAT:
-{
-  "analysis": {
-    "hairType": "description of hair type and density",
-    "hairColor": "description of color, treatments, and tone",
-    "condition": "assessment of moisture, damage, and specific concerns",
-    "texture": "fine/medium/coarse and porosity"
-  },
-  "recommendedProductIds": [
-    {
-      "id": "product_id_here",
-      "reason": "Personalized explanation of why this product helps their specific hair"
-    }
-  ]
-}`;
-
         // Extract the base64 data (remove data URL prefix if present)
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
@@ -257,41 +223,148 @@ RESPONSE FORMAT:
         else if (image.startsWith('data:image/webp')) mediaType = 'image/webp';
         else if (image.startsWith('data:image/gif')) mediaType = 'image/gif';
 
-        // Call Claude API
-        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': ANTHROPIC_API_KEY,
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-5-20250929',
-                max_tokens: 1500,
-                system: systemPrompt,
-                messages: [{
-                    role: 'user',
-                    content: [
-                        {
-                            type: 'image',
-                            source: {
-                                type: 'base64',
-                                media_type: mediaType,
-                                data: base64Data
-                            }
-                        },
-                        {
-                            type: 'text',
-                            text: 'Please analyze this hair photo with specific color naming and recommend 3-5 products with strong personalized buy-action reasons.'
-                        }
-                    ]
-                }]
-            })
-        });
+        async function callClaude({ system, userText, includeImage = true, maxTokens = 1200 }) {
+            const content = [];
+            if (includeImage) {
+                content.push({
+                    type: 'image',
+                    source: {
+                        type: 'base64',
+                        media_type: mediaType,
+                        data: base64Data
+                    }
+                });
+            }
+            content.push({ type: 'text', text: userText });
 
-        if (!claudeResponse.ok) {
-            const errorText = await claudeResponse.text();
-            console.error('Claude API error:', claudeResponse.status, errorText);
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': ANTHROPIC_API_KEY,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-5-20250929',
+                    max_tokens: maxTokens,
+                    system,
+                    messages: [{ role: 'user', content }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Claude API returned ${response.status}: ${errorText}`);
+            }
+            const data = await response.json();
+            return data.content?.[0]?.text || '';
+        }
+
+        // Stage 1: vision extraction for structured hair traits.
+        const extractionPrompt = `You are a precise professional hair analysis assistant.
+
+Analyze the provided hair photo and output ONLY valid JSON with this exact shape:
+{
+  "hairProfile": {
+    "hairType": "short text",
+    "hairColor": "highly specific color description",
+    "colorFamily": "one of: black, brown, blonde, red, copper, auburn, orange, fashion",
+    "tone": "warm, cool, or neutral",
+    "condition": "short text",
+    "texture": "short text"
+  }
+}
+
+Rules:
+- Be specific with color. Prefer copper/orange/auburn/red-orange when visible instead of defaulting to brown.
+- Never infer race, ethnicity, or protected traits.
+- No markdown or extra keys.`;
+
+        let extractedProfile = {};
+        try {
+            const extractionText = await callClaude({
+                system: extractionPrompt,
+                userText: 'Extract structured hair traits from this photo.',
+                includeImage: true,
+                maxTokens: 500
+            });
+            const extractionJson = extractJsonObject(extractionText);
+            extractedProfile = extractionJson?.hairProfile || {};
+        } catch (stage1Error) {
+            console.error('Hair extraction stage failed:', stage1Error.message);
+        }
+
+        const extractedSummary = JSON.stringify(extractedProfile, null, 2);
+        const systemPrompt = `You are D'yette Spain, an expert hair stylist with 32 years of professional experience in Charlotte, NC. You trained at Vidal Sassoon Academy in London, hold Redken color certification, and worked backstage with Redken for over ten years.
+
+You are creating a warm, conversion-focused hair assessment and product recommendation.
+
+Use this extracted hair profile as your primary visual source of truth:
+${extractedSummary}
+
+PRIMARY GOAL:
+- Give a warm, confidence-building professional assessment.
+- Convert that confidence into clear purchase intent with recommendations worth adding to cart today.
+
+TONE & VOICE (CRITICAL):
+- Warm, uplifting, friendly stylist voice. Never clinical or harsh.
+- Lead with at least one genuine compliment.
+- Never shame the customer or describe them negatively.
+- Use supportive phrasing for concerns.
+
+ANALYSIS INSTRUCTIONS:
+1) Hair Type: include visible curl pattern and density.
+2) Hair Color: be highly specific (black/dark brown/medium brown/light brown/blonde/red/copper/auburn/orange/fashion). Prefer warm-specific labels like copper/orange/red-orange over plain brown when applicable.
+3) Condition: mention improvement opportunities positively.
+4) Texture: identify fine/medium/coarse and porosity cues when visible.
+
+PRODUCT RECOMMENDATION INSTRUCTIONS (SELLING WITH SERVICE):
+- Select 3-5 products from the catalog below that best match this person's hair and goals.
+- Use exact product IDs from the catalog.
+- Recommendation reasons must be personalized and conversion-focused:
+  - Mention a specific visible outcome.
+  - Include a usage cue (when/how to use).
+  - End with a gentle buy-action hook.
+- Keep reasons concise and non-repetitive.
+- Recommend a balanced routine when possible.
+- Do not invent products or IDs.
+- Never infer or mention ethnicity, race, or protected traits.
+${douxInstruction}
+
+STRICT OUTPUT RULES:
+- Return valid JSON only, no markdown, no extra keys, no commentary outside JSON.
+
+PRODUCT CATALOG:
+${JSON.stringify(catalog, null, 2)}
+
+RESPONSE FORMAT:
+{
+  "analysis": {
+    "hairType": "description of hair type and density",
+    "hairColor": "description of color, treatments, and tone",
+    "condition": "assessment of moisture/strength and care opportunities",
+    "texture": "fine/medium/coarse and porosity cues"
+  },
+  "recommendedProductIds": [
+    {
+      "id": "product_id_here",
+      "reason": "Personalized explanation with outcome + usage + buy hook"
+    }
+  ]
+}`;
+
+        let analysisResult;
+        try {
+            const stage2Text = await callClaude({
+                system: systemPrompt,
+                userText: 'Using the extracted profile and catalog, return the final analysis and recommendations.',
+                includeImage: false,
+                maxTokens: 1500
+            });
+            analysisResult = extractJsonObject(stage2Text);
+            if (!analysisResult) throw new Error('No valid JSON in stage 2 response');
+        } catch (stage2Error) {
+            console.error('Hair recommendation stage failed:', stage2Error.message);
             return {
                 statusCode: 502,
                 headers,
@@ -299,27 +372,8 @@ RESPONSE FORMAT:
             };
         }
 
-        const claudeData = await claudeResponse.json();
-        const responseText = claudeData.content?.[0]?.text || '';
-
-        // Parse Claude's JSON response
-        let analysisResult;
-        try {
-            // Try to extract JSON from the response (handle potential markdown wrapping)
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error('No JSON found in response');
-            analysisResult = JSON.parse(jsonMatch[0]);
-        } catch (parseError) {
-            console.error('Failed to parse Claude response:', responseText);
-            return {
-                statusCode: 502,
-                headers,
-                body: JSON.stringify({ error: 'Failed to parse AI analysis. Please try again.' })
-            };
-        }
-
         // Match recommended product IDs to full product data
-        const recommendations = (analysisResult.recommendedProductIds || [])
+        const recommendations = (Array.isArray(analysisResult.recommendedProductIds) ? analysisResult.recommendedProductIds : [])
             .map(rec => {
                 const product = relevantProducts.find(p => p.id === rec.id);
                 if (!product) return null;
@@ -335,24 +389,46 @@ RESPONSE FORMAT:
             })
             .filter(Boolean);
 
-        // Guarantee The Doux output when user explicitly selected The Doux focus.
-        if (douxFocus && !mensMode && recommendations.length === 0) {
-            const fallbackDoux = relevantProducts
-                .filter(isDouxProduct)
-                .slice(0, 4)
-                .map(product => ({
-                    product,
-                    reason: 'Strong match for your hair goals and a great add-to-cart pick to start seeing results this week.'
-                }));
-            recommendations.push(...fallbackDoux);
+        // Filter and dedupe recommendation IDs after model output.
+        const dedupedRecommendations = [];
+        const seenProductIds = new Set();
+        for (const rec of recommendations) {
+            if (seenProductIds.has(rec.product.id)) continue;
+            if (douxFocus && !mensMode && !isDouxProduct(rec.product)) continue;
+            seenProductIds.add(rec.product.id);
+            dedupedRecommendations.push(rec);
+        }
+
+        const fallbackPool = (douxFocus && !mensMode)
+            ? relevantProducts.filter(isDouxProduct)
+            : relevantProducts;
+        for (const product of fallbackPool) {
+            if (dedupedRecommendations.length >= 3) break;
+            if (seenProductIds.has(product.id)) continue;
+            seenProductIds.add(product.id);
+            dedupedRecommendations.push({
+                product,
+                reason: 'Great fit for your routine and a strong add-to-cart pick to start seeing results this week.'
+            });
+        }
+
+        const finalAnalysis = {
+            hairType: firstNonEmpty(analysisResult.analysis?.hairType, extractedProfile.hairType, 'Hair type not clearly visible'),
+            hairColor: firstNonEmpty(analysisResult.analysis?.hairColor, extractedProfile.hairColor, 'Hair color not clearly visible'),
+            condition: firstNonEmpty(analysisResult.analysis?.condition, extractedProfile.condition, 'Condition not clearly visible'),
+            texture: firstNonEmpty(analysisResult.analysis?.texture, extractedProfile.texture, 'Texture not clearly visible')
+        };
+
+        if (isGenericBrownColor(finalAnalysis.hairColor) && extractedProfile.hairColor && !isGenericBrownColor(extractedProfile.hairColor)) {
+            finalAnalysis.hairColor = extractedProfile.hairColor;
         }
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
-                analysis: analysisResult.analysis,
-                recommendations
+                analysis: finalAnalysis,
+                recommendations: dedupedRecommendations.slice(0, 5)
             })
         };
     } catch (error) {
