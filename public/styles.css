@@ -2120,6 +2120,13 @@ body.mens-mode .ha-promo-section {
     display: none;
     margin-bottom: 0.75rem;
     min-height: 48px;
+    width: 100%;
+}
+.wallet-button-container iframe,
+.wallet-button-container button,
+.wallet-button-container div {
+    width: 100% !important;
+    max-width: 100% !important;
 }
 .apple-pay-button {
     -webkit-appearance: -apple-pay-button;
