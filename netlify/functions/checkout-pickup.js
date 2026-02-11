@@ -1,7 +1,8 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const OWNER_EMAIL = process.env.OWNER_EMAIL || 'dyette@icloud.com';
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const { sendEmail } = require('./gmail-utils');
 
 exports.handler = async (event) => {
     const headers = {
@@ -94,18 +95,10 @@ exports.handler = async (event) => {
 
                 const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-                const emailBody = {
-                    personalizations: [{
-                        to: [{ email: 'dyette@icloud.com' }],
-                        subject: '🛍️ New Local Pickup Order'
-                    }],
-                    from: {
-                        email: 'orders@shopgrasshopper.com',
-                        name: 'The Grasshopper'
-                    },
-                    content: [{
-                        type: 'text/plain',
-                        value: `New Local Pickup Order
+                await sendEmail({
+                    to: OWNER_EMAIL,
+                    subject: 'New Local Pickup Order',
+                    textBody: `New Local Pickup Order
 
 Customer Phone: ${phone}
 
@@ -122,24 +115,9 @@ Please contact them at ${phone} within 24 hours to arrange pickup.
 
 Order Link: ${checkoutData.payment_link.url}
 `
-                    }]
-                };
-
-                if (SENDGRID_API_KEY) {
-                    await fetch('https://api.sendgrid.com/v3/mail/send', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${SENDGRID_API_KEY}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(emailBody)
-                    });
-                } else {
-                    console.log('SendGrid not configured, email not sent:', emailBody);
-                }
+                });
             } catch (emailError) {
                 console.error('Email error:', emailError);
-                // Don't fail the checkout if email fails
             }
 
             return {
