@@ -24,7 +24,7 @@ exports.handler = async (event) => {
             return { statusCode: 200, headers, body: JSON.stringify({ valid: false, message: 'Please enter a promo code' }) };
         }
 
-        // Search Square catalog for DISCOUNT objects (coupons created in Square Dashboard)
+        // Fetch all DISCOUNT, PRICING_RULE, and DISCOUNT_CODE objects in one call
         const searchResponse = await fetch(`${SQUARE_BASE_URL}/catalog/search`, {
             method: 'POST',
             headers: {
@@ -33,7 +33,7 @@ exports.handler = async (event) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                object_types: ['DISCOUNT'],
+                object_types: ['DISCOUNT', 'PRICING_RULE', 'PRODUCT_SET'],
                 include_related_objects: true
             })
         });
@@ -45,110 +45,105 @@ exports.handler = async (event) => {
         }
 
         const searchData = await searchResponse.json();
-        const discounts = searchData.objects || [];
+        const allObjects = searchData.objects || [];
+        const relatedObjects = searchData.related_objects || [];
+        const allCombined = [...allObjects, ...relatedObjects];
 
-        console.log('Found discounts:', discounts.map(d => ({
-            id: d.id,
-            name: d.discount_data?.name,
-            type: d.discount_data?.discount_type
+        const discounts = allCombined.filter(o => o.type === 'DISCOUNT');
+        const pricingRules = allCombined.filter(o => o.type === 'PRICING_RULE');
+
+        console.log('All discounts:', discounts.map(d => ({
+            id: d.id, name: d.discount_data?.name, type: d.discount_data?.discount_type
+        })));
+        console.log('All pricing rules:', pricingRules.map(r => ({
+            id: r.id, name: r.pricing_rule_data?.name, discountId: r.pricing_rule_data?.discount_id
         })));
 
-        // Match discount by name (case-insensitive) - Square Dashboard stores the coupon code as the discount name
-        const matchingDiscount = discounts.find(obj =>
-            obj.discount_data?.name?.toUpperCase()?.trim() === upperCode
+        // Strategy 1: Match by discount name
+        let matchedDiscount = discounts.find(d =>
+            d.discount_data?.name?.toUpperCase()?.trim() === upperCode
         );
 
-        if (!matchingDiscount) {
-            // Also try searching PRICING_RULE objects as fallback
-            const prSearchResponse = await fetch(`${SQUARE_BASE_URL}/catalog/search`, {
-                method: 'POST',
-                headers: {
-                    'Square-Version': '2024-11-20',
-                    'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    object_types: ['PRICING_RULE'],
-                    include_related_objects: true
-                })
-            });
+        // Strategy 2: Match by pricing rule name (Square coupons store the code here)
+        let matchedRule = null;
+        if (!matchedDiscount) {
+            matchedRule = pricingRules.find(r =>
+                r.pricing_rule_data?.name?.toUpperCase()?.trim() === upperCode
+            );
 
-            if (prSearchResponse.ok) {
-                const prData = await prSearchResponse.json();
-                const pricingRules = prData.objects || [];
-                const relatedObjects = prData.related_objects || [];
+            if (matchedRule) {
+                const discountId = matchedRule.pricing_rule_data?.discount_id;
+                if (discountId) {
+                    matchedDiscount = allCombined.find(o => o.id === discountId && o.type === 'DISCOUNT');
+                    if (!matchedDiscount) {
+                        // Fetch the discount directly
+                        const dRes = await fetch(`${SQUARE_BASE_URL}/catalog/object/${discountId}`, {
+                            headers: {
+                                'Square-Version': '2024-11-20',
+                                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (dRes.ok) {
+                            const dData = await dRes.json();
+                            matchedDiscount = dData.object;
+                        }
+                    }
+                }
+            }
+        }
 
-                console.log('Found pricing rules:', pricingRules.map(r => ({
-                    id: r.id,
-                    name: r.pricing_rule_data?.name
-                })));
+        // Strategy 3: Partial/contains match on both discounts and pricing rules
+        if (!matchedDiscount && !matchedRule) {
+            matchedDiscount = discounts.find(d =>
+                d.discount_data?.name?.toUpperCase()?.trim()?.includes(upperCode) ||
+                upperCode.includes(d.discount_data?.name?.toUpperCase()?.trim() || '')
+            );
 
-                const matchingRule = pricingRules.find(rule =>
-                    rule.pricing_rule_data?.name?.toUpperCase()?.trim() === upperCode
+            if (!matchedDiscount) {
+                matchedRule = pricingRules.find(r =>
+                    r.pricing_rule_data?.name?.toUpperCase()?.trim()?.includes(upperCode) ||
+                    upperCode.includes(r.pricing_rule_data?.name?.toUpperCase()?.trim() || '')
                 );
 
-                if (matchingRule) {
-                    // Found via pricing rule - get the associated discount
-                    const discountId = matchingRule.pricing_rule_data?.discount_id;
-                    let discount = null;
-
+                if (matchedRule) {
+                    const discountId = matchedRule.pricing_rule_data?.discount_id;
                     if (discountId) {
-                        const discountObj = relatedObjects.find(obj => obj.id === discountId && obj.type === 'DISCOUNT');
-                        if (discountObj) {
-                            discount = discountObj.discount_data;
-                        } else {
-                            const discountResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${discountId}`, {
+                        matchedDiscount = allCombined.find(o => o.id === discountId && o.type === 'DISCOUNT');
+                        if (!matchedDiscount) {
+                            const dRes = await fetch(`${SQUARE_BASE_URL}/catalog/object/${discountId}`, {
                                 headers: {
                                     'Square-Version': '2024-11-20',
                                     'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
                                     'Content-Type': 'application/json'
                                 }
                             });
-                            if (discountResponse.ok) {
-                                const discountData = await discountResponse.json();
-                                discount = discountData.object?.discount_data;
+                            if (dRes.ok) {
+                                const dData = await dRes.json();
+                                matchedDiscount = dData.object;
                             }
                         }
                     }
-
-                    if (discount) {
-                        return { statusCode: 200, headers, body: JSON.stringify(buildDiscountResponse(upperCode, discount, matchingRule.pricing_rule_data)) };
-                    }
                 }
             }
+        }
 
+        if (!matchedDiscount) {
             return { statusCode: 200, headers, body: JSON.stringify({ valid: false, message: 'Invalid promo code' }) };
         }
 
-        const discount = matchingDiscount.discount_data;
+        const discount = matchedDiscount.discount_data;
 
-        // Check if there's a linked pricing rule with date restrictions
-        // (Search for pricing rules that reference this discount)
-        const prCheckResponse = await fetch(`${SQUARE_BASE_URL}/catalog/search`, {
-            method: 'POST',
-            headers: {
-                'Square-Version': '2024-11-20',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                object_types: ['PRICING_RULE'],
-                include_related_objects: false
-            })
-        });
-
-        let pricingRuleData = null;
-        if (prCheckResponse.ok) {
-            const prData = await prCheckResponse.json();
-            const linkedRule = (prData.objects || []).find(rule =>
-                rule.pricing_rule_data?.discount_id === matchingDiscount.id
+        // Find linked pricing rule for date validation
+        if (!matchedRule) {
+            matchedRule = pricingRules.find(r =>
+                r.pricing_rule_data?.discount_id === matchedDiscount.id
             );
-            if (linkedRule) {
-                pricingRuleData = linkedRule.pricing_rule_data;
-            }
         }
 
-        // Check validity dates from pricing rule if present
+        const pricingRuleData = matchedRule?.pricing_rule_data || null;
+
+        // Check validity dates
         if (pricingRuleData) {
             const today = new Date().toISOString().split('T')[0];
             const validFrom = pricingRuleData.valid_from_date;
