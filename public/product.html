@@ -170,10 +170,13 @@
         let currentProduct = null;
 
         // Size lookup for single-variant products without size in name
+        // Specific product sizes (checked first)
         const productSizes = {
             // Bumble and Bumble
-            'thickening shampoo': '8.5 oz', 'thickening conditioner': '8.5 oz',
             'surf spray': '4.2 oz', 'invisible oil': '3.4 oz', "don't blow it": '5 oz',
+            'curl defining': '8.5 oz', 'seaweed': '8.5 oz', 'mending': '8.5 oz',
+            'gentle shampoo': '8.5 oz', 'super rich': '8.5 oz', 'curl cream': '6 oz',
+            'curl mousse': '5 oz', 'prep': '8 oz', 'tonic lotion': '8.5 oz',
             // Olaplex
             'no. 3': '3.3 oz', 'no.3': '3.3 oz', 'no 3': '3.3 oz',
             'no. 4': '8.5 oz', 'no.4': '8.5 oz', 'no 4': '8.5 oz',
@@ -183,36 +186,57 @@
             'no. 8': '3.3 oz', 'no.8': '3.3 oz', 'no 8': '3.3 oz',
             // OUAI
             'wave spray': '4.9 oz', 'leave in conditioner': '4.7 oz', 'hair oil': '1.5 oz',
-            'fine hair shampoo': '10 oz', 'medium hair shampoo': '10 oz',
             // Living Proof
-            'perfect hair day shampoo': '8 oz', 'phd shampoo': '8 oz',
-            'perfect hair day conditioner': '8 oz', 'phd conditioner': '8 oz',
             'dry volume blast': '7.5 oz', 'full dry volume': '7.5 oz',
-            'no frizz shampoo': '8 oz', 'no frizz conditioner': '8 oz',
             // Color Wow
             'dream coat': '6.7 oz', 'root cover up': '2.1 g',
             'style on steroids': '7 oz', 'one minute transformation': '4 oz',
             // The Doux
             'big poppa': '16 oz', 'mousse def': '7 oz', 'pop lock': '8 oz', 'fresh to de': '8 oz',
             // Redken Brews
-            'daily shampoo': '10.1 oz', 'clay pomade': '3.4 oz',
-            'grip tight': '5 oz', 'daily conditioner': '10.1 oz',
+            'clay pomade': '3.4 oz', 'grip tight': '5 oz',
             // American Crew
-            'fiber': '3 oz', 'pomade': '3 oz', 'forming cream': '3 oz', '3-in-1': '15.2 oz',
+            'fiber': '3 oz', 'forming cream': '3 oz', '3-in-1': '15.2 oz',
             // 18.21 Man Made
-            'wash': '18 oz', 'paste': '2 oz', 'spirits spritzer': '3.4 oz',
+            'spirits spritzer': '3.4 oz',
             // Pete & Pedro
-            'putty': '2 oz', 'salt': '8.5 oz', 'clay': '2 oz',
+            'putty': '2 oz',
             // Sexy Hair
             'hard up': '5.1 oz', 'spray & play': '10 oz', 'spray play': '10 oz',
             // L3VEL3
-            'hair gel': '16.9 oz', 'gel': '16.9 oz',
+            'hair gel': '16.9 oz',
         };
 
-        function getProductSize(name) {
+        // Brand-based default sizes (fallback by product type)
+        const brandDefaults = {
+            'Bumble and Bumble': { shampoo: '8.5 oz', conditioner: '8.5 oz', spray: '4.2 oz', oil: '3.4 oz', cream: '5 oz', mask: '6.7 oz', default: '8.5 oz' },
+            'Olaplex': { shampoo: '8.5 oz', conditioner: '8.5 oz', mask: '3.3 oz', oil: '1 oz', default: '3.3 oz' },
+            'OUAI': { shampoo: '10 oz', conditioner: '10 oz', spray: '4.9 oz', oil: '1.5 oz', cream: '3.4 oz', default: '10 oz' },
+            'Living Proof': { shampoo: '8 oz', conditioner: '8 oz', spray: '7.5 oz', cream: '4 oz', default: '8 oz' },
+            'Color Wow': { spray: '6.7 oz', cream: '4 oz', default: '6.7 oz' },
+            'The Doux': { gel: '16 oz', mousse: '7 oz', spray: '5 oz', conditioner: '8 oz', default: '8 oz' },
+            'Redken Brews': { shampoo: '10.1 oz', conditioner: '10.1 oz', pomade: '3.4 oz', gel: '5 oz', default: '10.1 oz' },
+            'American Crew': { shampoo: '15.2 oz', pomade: '3 oz', cream: '3 oz', gel: '8.4 oz', spray: '5.1 oz', default: '3 oz' },
+            '18.21 Man Made': { wash: '18 oz', pomade: '2 oz', paste: '2 oz', spray: '3.4 oz', default: '2 oz' },
+            'Pete & Pedro': { spray: '8.5 oz', putty: '2 oz', clay: '2 oz', pomade: '2 oz', default: '2 oz' },
+            'Sexy Hair': { gel: '5.1 oz', spray: '10 oz', default: '5.1 oz' },
+            'L3VEL3': { gel: '16.9 oz', default: '16.9 oz' },
+        };
+
+        function getProductSize(name, brand) {
             const lower = name.toLowerCase();
+            // Check specific product matches first
             for (const [key, size] of Object.entries(productSizes)) {
                 if (lower.includes(key)) return size;
+            }
+            // Fall back to brand + product type
+            const brandDef = brandDefaults[brand];
+            if (brandDef) {
+                const types = ['shampoo', 'conditioner', 'spray', 'oil', 'cream', 'gel', 'mousse', 'pomade', 'paste', 'mask', 'wash', 'putty', 'clay'];
+                for (const type of types) {
+                    if (lower.includes(type) && brandDef[type]) return brandDef[type];
+                }
+                return brandDef.default || null;
             }
             return null;
         }
@@ -268,7 +292,7 @@
                             ` : (() => {
                                 const varName = currentProduct.variations?.[0]?.name;
                                 const hasRealName = varName && varName !== 'Regular' && varName !== 'Standard';
-                                const lookedUpSize = getProductSize(currentProduct.name);
+                                const lookedUpSize = getProductSize(currentProduct.name, currentProduct.brand);
                                 const sizeText = hasRealName ? varName : lookedUpSize;
                                 return sizeText ? `<p class="product-single-variant">Size: ${sizeText}</p>` : '';
                             })()}
