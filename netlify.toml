@@ -18,3 +18,8 @@
   from = "/.well-known/apple-developer-merchantid-domain-association.txt"
   to = "/.well-known/apple-developer-merchantid-domain-association"
   status = 200
+
+[[headers]]
+  for = "/.well-known/apple-developer-merchantid-domain-association"
+  [headers.values]
+    Content-Type = "application/octet-stream"

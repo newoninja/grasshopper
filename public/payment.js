@@ -366,6 +366,10 @@ async function initializePayments(config, data) {
         applePay = await payments.applePay(paymentRequest);
         await applePay.attach('#apple-pay-button');
         document.getElementById('apple-pay-button').style.display = 'block';
+        document.getElementById('apple-pay-button').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleWalletPayment(applePay);
+        });
         showWalletButtons();
     } catch (e) {
         console.log('Apple Pay not available:', e.message);
@@ -377,6 +381,10 @@ async function initializePayments(config, data) {
         googlePay = await payments.googlePay(paymentRequest);
         await googlePay.attach('#google-pay-button');
         document.getElementById('google-pay-button').style.display = 'block';
+        document.getElementById('google-pay-button').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleWalletPayment(googlePay);
+        });
         showWalletButtons();
     } catch (e) {
         console.log('Google Pay not available:', e.message);
