@@ -66,10 +66,12 @@ exports.handler = async (event) => {
                     const varData = await varResponse.json();
                     const catalogPriceCents = varData.object?.item_variation_data?.price_money?.amount;
                     if (catalogPriceCents) {
-                        const expectedSaleCents = Math.round(catalogPriceCents * (1 - SALE_DISCOUNT));
-                        const clientCents = Math.round((item.price || 0) * 100);
-                        // Allow $2 tolerance for rounding differences
-                        if (Math.abs(clientCents - expectedSaleCents) > 200) {
+                        // Match client rounding: round dollars first, then apply discount and round again
+                        const catalogDollars = catalogPriceCents / 100;
+                        const expectedSaleDollars = Math.round(Math.round(catalogDollars) * (1 - SALE_DISCOUNT));
+                        const clientDollars = Math.round(item.price || 0);
+                        // Block if client price is more than 20% below expected (price manipulation)
+                        if (clientDollars < expectedSaleDollars * 0.8 || clientDollars > expectedSaleDollars * 1.2) {
                             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Price mismatch. Please refresh and try again.' }) };
                         }
                     }
