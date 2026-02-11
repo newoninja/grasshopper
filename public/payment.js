@@ -364,9 +364,10 @@ async function initializePayments(config, data) {
     try {
         const paymentRequest = buildPaymentRequest(data);
         applePay = await payments.applePay(paymentRequest);
-        await applePay.attach('#apple-pay-button');
-        document.getElementById('apple-pay-button').style.display = 'block';
-        document.getElementById('apple-pay-button').addEventListener('click', async (e) => {
+        // Apple Pay doesn't use .attach() — show our own button and handle click
+        const applePayBtn = document.getElementById('apple-pay-button');
+        applePayBtn.style.display = 'block';
+        applePayBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await handleWalletPayment(applePay);
         });

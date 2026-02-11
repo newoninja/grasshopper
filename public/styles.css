@@ -2121,6 +2121,18 @@ body.mens-mode .ha-promo-section {
     margin-bottom: 0.75rem;
     min-height: 48px;
 }
+.apple-pay-button {
+    -webkit-appearance: -apple-pay-button;
+    -apple-pay-button-type: buy;
+    -apple-pay-button-style: black;
+    display: none;
+    width: 100%;
+    min-height: 48px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+}
 .checkout-divider {
     display: flex;
     align-items: center;
