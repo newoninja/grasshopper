@@ -18,13 +18,13 @@ function salePrice(price) {
 }
 
 function salePriceHtml(price) {
-    if (!SALE_ACTIVE) return `$${price.toFixed(2)}`;
-    return `<span class="price-original">$${price.toFixed(2)}</span> <span class="price-sale">$${salePrice(price).toFixed(2)}</span>`;
+    if (!SALE_ACTIVE) return `$${Math.round(price)}`;
+    return `<span class="price-original">$${Math.round(price)}</span> <span class="price-sale">$${salePrice(price).toFixed(2)}</span>`;
 }
 
 function salePriceRangeHtml(min, max) {
-    if (!SALE_ACTIVE) return `$${min.toFixed(2)} - $${max.toFixed(2)}`;
-    return `<span class="price-original">$${min.toFixed(2)} - $${max.toFixed(2)}</span> <span class="price-sale">$${salePrice(min).toFixed(2)} - $${salePrice(max).toFixed(2)}</span>`;
+    if (!SALE_ACTIVE) return `$${Math.round(min)} - $${Math.round(max)}`;
+    return `<span class="price-original">$${Math.round(min)} - $${Math.round(max)}</span> <span class="price-sale">$${salePrice(min).toFixed(2)} - $${salePrice(max).toFixed(2)}</span>`;
 }
 
 // ============================================
