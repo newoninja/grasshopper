@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { connectLambda, getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
     const headers = {
@@ -11,6 +11,7 @@ exports.handler = async (event) => {
         return { statusCode: 200, headers, body: '' };
     }
 
+    connectLambda(event);
     const store = getStore('reviews');
 
     if (event.httpMethod === 'GET') {
