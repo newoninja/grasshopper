@@ -259,15 +259,18 @@ async function applyPromo() {
             const shippingEl = document.getElementById('checkoutShipping');
             const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
             const subtotalCents = Math.round(subtotal * 100);
+            // Only "WHYNOT" promo code gets tax deductions
+            const taxDeductible = code === 'WHYNOT';
+
             if (data.freeShipping) {
                 discountCents = shippingCents;
                 productDiscountCents = 0;
             } else if (data.type === 'percent') {
-                productDiscountCents = Math.round(subtotalCents * data.value / 100);
+                productDiscountCents = taxDeductible ? Math.round(subtotalCents * data.value / 100) : 0;
                 discountCents = Math.round((subtotalCents + shippingCents) * data.value / 100);
             } else {
                 // Fixed amount: apply to products first, then shipping
-                productDiscountCents = Math.min(data.value, subtotalCents);
+                productDiscountCents = taxDeductible ? Math.min(data.value, subtotalCents) : 0;
                 discountCents = Math.min(data.value, subtotalCents + shippingCents);
             }
 
@@ -357,8 +360,9 @@ function updateTotal() {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    // Tax always on full subtotal (site-wide sale price) — promo codes don't reduce tax
-    const taxCents = Math.round(subtotalCents * NC_TAX_RATE);
+    // Only "WHYNOT" promo reduces taxable amount; all others tax on full subtotal
+    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
+    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = Math.max(0, totalCents) / 100;
 
@@ -476,7 +480,8 @@ function buildPaymentRequest(data) {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const taxCents = Math.round(subtotalCents * NC_TAX_RATE);
+    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
+    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = (Math.max(0, totalCents) / 100).toFixed(2);
 
@@ -562,9 +567,10 @@ async function processPayment(sourceId) {
             body.shippingAddress = address;
         }
 
-        // Tax always on full subtotal (site-wide sale price)
+        // Only "WHYNOT" promo reduces taxable amount
         const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0) * 100);
-        body.taxCents = Math.round(subtotalCents * NC_TAX_RATE);
+        const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
+        body.taxCents = Math.round(taxableAmount * NC_TAX_RATE);
 
         if (appliedPromo) {
             body.promoCode = appliedPromo.code;
