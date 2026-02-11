@@ -169,6 +169,54 @@
     <script>
         let currentProduct = null;
 
+        // Size lookup for single-variant products without size in name
+        const productSizes = {
+            // Bumble and Bumble
+            'thickening shampoo': '8.5 oz', 'thickening conditioner': '8.5 oz',
+            'surf spray': '4.2 oz', 'invisible oil': '3.4 oz', "don't blow it": '5 oz',
+            // Olaplex
+            'no. 3': '3.3 oz', 'no.3': '3.3 oz', 'no 3': '3.3 oz',
+            'no. 4': '8.5 oz', 'no.4': '8.5 oz', 'no 4': '8.5 oz',
+            'no. 5': '8.5 oz', 'no.5': '8.5 oz', 'no 5': '8.5 oz',
+            'no. 6': '3.3 oz', 'no.6': '3.3 oz', 'no 6': '3.3 oz',
+            'no. 7': '1 oz', 'no.7': '1 oz', 'no 7': '1 oz',
+            'no. 8': '3.3 oz', 'no.8': '3.3 oz', 'no 8': '3.3 oz',
+            // OUAI
+            'wave spray': '4.9 oz', 'leave in conditioner': '4.7 oz', 'hair oil': '1.5 oz',
+            'fine hair shampoo': '10 oz', 'medium hair shampoo': '10 oz',
+            // Living Proof
+            'perfect hair day shampoo': '8 oz', 'phd shampoo': '8 oz',
+            'perfect hair day conditioner': '8 oz', 'phd conditioner': '8 oz',
+            'dry volume blast': '7.5 oz', 'full dry volume': '7.5 oz',
+            'no frizz shampoo': '8 oz', 'no frizz conditioner': '8 oz',
+            // Color Wow
+            'dream coat': '6.7 oz', 'root cover up': '2.1 g',
+            'style on steroids': '7 oz', 'one minute transformation': '4 oz',
+            // The Doux
+            'big poppa': '16 oz', 'mousse def': '7 oz', 'pop lock': '8 oz', 'fresh to de': '8 oz',
+            // Redken Brews
+            'daily shampoo': '10.1 oz', 'clay pomade': '3.4 oz',
+            'grip tight': '5 oz', 'daily conditioner': '10.1 oz',
+            // American Crew
+            'fiber': '3 oz', 'pomade': '3 oz', 'forming cream': '3 oz', '3-in-1': '15.2 oz',
+            // 18.21 Man Made
+            'wash': '18 oz', 'paste': '2 oz', 'spirits spritzer': '3.4 oz',
+            // Pete & Pedro
+            'putty': '2 oz', 'salt': '8.5 oz', 'clay': '2 oz',
+            // Sexy Hair
+            'hard up': '5.1 oz', 'spray & play': '10 oz', 'spray play': '10 oz',
+            // L3VEL3
+            'hair gel': '16.9 oz', 'gel': '16.9 oz',
+        };
+
+        function getProductSize(name) {
+            const lower = name.toLowerCase();
+            for (const [key, size] of Object.entries(productSizes)) {
+                if (lower.includes(key)) return size;
+            }
+            return null;
+        }
+
         async function loadProduct() {
             const container = document.getElementById('productContainer');
             const params = new URLSearchParams(window.location.search);
@@ -217,9 +265,13 @@
                                         `).join('')}
                                     </select>
                                 </div>
-                            ` : (currentProduct.variations && currentProduct.variations.length === 1 && currentProduct.variations[0].name && currentProduct.variations[0].name !== 'Regular' ? `
-                                <p class="product-single-variant">Size: ${currentProduct.variations[0].name}</p>
-                            ` : '')}
+                            ` : (() => {
+                                const varName = currentProduct.variations?.[0]?.name;
+                                const hasRealName = varName && varName !== 'Regular' && varName !== 'Standard';
+                                const lookedUpSize = getProductSize(currentProduct.name);
+                                const sizeText = hasRealName ? varName : lookedUpSize;
+                                return sizeText ? `<p class="product-single-variant">Size: ${sizeText}</p>` : '';
+                            })()}
                             <div class="product-actions">
                                 <button class="buy-now-btn" onclick="handleBuyNow()">Buy Now</button>
                                 <button class="add-to-cart-btn-large" onclick="handleAddToCart()">Add to Cart</button>
