@@ -422,9 +422,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Review stars on product cards
 const reviewCache = {};
+let reviewsLoading = false;
 
 async function loadCardReviews() {
-    const cards = document.querySelectorAll('.product-review-stars[data-review-id]');
+    if (reviewsLoading) return;
+    reviewsLoading = true;
+
+    const cards = document.querySelectorAll('.product-review-stars[data-review-id]:not([data-loaded])');
     const ids = [...new Set([...cards].map(c => c.dataset.reviewId))];
 
     for (const id of ids) {
@@ -436,16 +440,18 @@ async function loadCardReviews() {
             const res = await fetch(`/api/reviews?productId=${encodeURIComponent(id)}`);
             const reviews = await res.json();
             reviewCache[id] = reviews;
-            applyReviewStars(id, reviews);
+            applyReviewStars(id, reviewCache[id]);
         } catch (e) {
             reviewCache[id] = [];
             applyReviewStars(id, []);
         }
     }
+    reviewsLoading = false;
 }
 
 function applyReviewStars(productId, reviews) {
     document.querySelectorAll(`.product-review-stars[data-review-id="${productId}"]`).forEach(el => {
+        el.setAttribute('data-loaded', 'true');
         if (reviews.length === 0) {
             let stars = '';
             for (let i = 0; i < 5; i++) stars += '<span class="star star-empty">★</span>';
@@ -461,8 +467,12 @@ function applyReviewStars(productId, reviews) {
     });
 }
 
-// Auto-load reviews after any grid renders
+// Auto-load reviews after grids render, debounced
+let reviewTimer = null;
 const cardObserver = new MutationObserver(() => {
-    if (document.querySelector('.product-review-stars[data-review-id]')) loadCardReviews();
+    if (document.querySelector('.product-review-stars[data-review-id]:not([data-loaded])')) {
+        clearTimeout(reviewTimer);
+        reviewTimer = setTimeout(loadCardReviews, 300);
+    }
 });
 cardObserver.observe(document.body, { childList: true, subtree: true });
