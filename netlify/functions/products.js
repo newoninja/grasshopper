@@ -11,6 +11,7 @@ const brandPatterns = [
     { pattern: /^ouai/i, brand: 'OUAI' },
     { pattern: /^living proof/i, brand: 'Living Proof' },
     { pattern: /^cw\s/i, brand: 'Color Wow' },
+    { pattern: /^the doux/i, brand: 'The Doux' },
     // Men's brands
     { pattern: /^redken brews/i, brand: 'Redken Brews' },
     { pattern: /^american crew/i, brand: 'American Crew' },
