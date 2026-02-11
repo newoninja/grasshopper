@@ -439,6 +439,7 @@ async function loadCardReviews() {
             applyReviewStars(id, reviews);
         } catch (e) {
             reviewCache[id] = [];
+            applyReviewStars(id, []);
         }
     }
 }
@@ -446,7 +447,9 @@ async function loadCardReviews() {
 function applyReviewStars(productId, reviews) {
     document.querySelectorAll(`.product-review-stars[data-review-id="${productId}"]`).forEach(el => {
         if (reviews.length === 0) {
-            el.innerHTML = '';
+            let stars = '';
+            for (let i = 0; i < 5; i++) stars += '<span class="star star-empty">★</span>';
+            el.innerHTML = `${stars}<span class="card-review-count">(0)</span>`;
             return;
         }
         const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
