@@ -8,6 +8,7 @@ let applePay = null;
 let googlePay = null;
 let checkoutData = null;
 let discountCents = 0;
+const NC_TAX_RATE = 0.0725;
 let appliedPromo = null;
 
 // ============================================
@@ -282,9 +283,13 @@ function updateTotal() {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const totalCents = subtotalCents + shippingCents - discountCents;
+    const taxableAmount = Math.max(0, subtotalCents - discountCents);
+    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+    const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = Math.max(0, totalCents) / 100;
 
+    const taxEl = document.getElementById('checkoutTax');
+    if (taxEl) taxEl.textContent = `$${(taxCents / 100).toFixed(2)}`;
     document.getElementById('checkoutTotal').textContent = `$${total.toFixed(2)}`;
 }
 
@@ -397,7 +402,9 @@ function buildPaymentRequest(data) {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const totalCents = subtotalCents + shippingCents - discountCents;
+    const taxableAmount = Math.max(0, subtotalCents - discountCents);
+    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+    const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = (Math.max(0, totalCents) / 100).toFixed(2);
 
     return payments.paymentRequest({
@@ -481,6 +488,11 @@ async function processPayment(sourceId) {
         if (address) {
             body.shippingAddress = address;
         }
+
+        // Add tax
+        const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0) * 100);
+        const taxableAmount = Math.max(0, subtotalCents - discountCents);
+        body.taxCents = Math.round(taxableAmount * NC_TAX_RATE);
 
         if (appliedPromo) {
             body.promoCode = appliedPromo.code;

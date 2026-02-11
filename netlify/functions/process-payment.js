@@ -19,7 +19,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { sourceId, items, orderType, phone, totalAmount, shippingAddress, promoCode, discountCents } = JSON.parse(event.body);
+        const { sourceId, items, orderType, phone, totalAmount, shippingAddress, promoCode, discountCents, taxCents } = JSON.parse(event.body);
 
         if (!sourceId || !items || !items.length || !orderType) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -111,6 +111,14 @@ exports.handler = async (event) => {
             serviceCharges.push({
                 name: 'Shipping',
                 amount_money: { amount: shippingAmount, currency: 'USD' },
+                calculation_phase: 'SUBTOTAL_PHASE'
+            });
+        }
+
+        if (taxCents && taxCents > 0) {
+            serviceCharges.push({
+                name: 'NC Sales Tax (7.25%)',
+                amount_money: { amount: taxCents, currency: 'USD' },
                 calculation_phase: 'SUBTOTAL_PHASE'
             });
         }
