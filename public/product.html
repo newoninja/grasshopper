@@ -165,7 +165,7 @@
         </div>
     </footer>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
     <script>
         let currentProduct = null;
 
@@ -284,7 +284,7 @@
                                     <select id="variantSelect" class="variant-select" onchange="updateVariant()">
                                         ${currentProduct.variations.map(v => `
                                             <option value="${v.id}" data-price="${v.price}">
-                                                ${v.name} - $${v.price.toFixed(2)}
+                                                ${v.name} - $${salePrice(v.price)}
                                             </option>
                                         `).join('')}
                                     </select>

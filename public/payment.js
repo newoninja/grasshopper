@@ -75,9 +75,10 @@ function migrateItems(items) {
     const SALE_DISCOUNT = 0.20;
     return items.map(item => {
         if (!item.originalPrice && SALE_ACTIVE) {
-            item.originalPrice = Math.round(item.price / (1 - SALE_DISCOUNT));
-        }
-        if (item.originalPrice) {
+            // Old item without originalPrice — price IS the original Square price
+            item.originalPrice = Math.round(item.price);
+            item.price = Math.round(item.price * (1 - SALE_DISCOUNT));
+        } else if (item.originalPrice) {
             item.originalPrice = Math.round(item.originalPrice);
             item.price = SALE_ACTIVE ? Math.round(item.originalPrice * (1 - SALE_DISCOUNT)) : item.originalPrice;
         } else {
@@ -354,8 +355,8 @@ function updateTotal() {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
-    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+    // Tax always on full subtotal (site-wide sale price) — promo codes don't reduce tax
+    const taxCents = Math.round(subtotalCents * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = Math.max(0, totalCents) / 100;
 
@@ -473,8 +474,7 @@ function buildPaymentRequest(data) {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
-    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+    const taxCents = Math.round(subtotalCents * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = (Math.max(0, totalCents) / 100).toFixed(2);
 
@@ -560,10 +560,9 @@ async function processPayment(sourceId) {
             body.shippingAddress = address;
         }
 
-        // Tax on product subtotal minus product-portion of discount
+        // Tax always on full subtotal (site-wide sale price)
         const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0) * 100);
-        const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
-        body.taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+        body.taxCents = Math.round(subtotalCents * NC_TAX_RATE);
 
         if (appliedPromo) {
             body.promoCode = appliedPromo.code;

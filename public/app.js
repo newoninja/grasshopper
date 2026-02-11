@@ -16,10 +16,10 @@ let pickupPhone = '';
 // Migrate old cart items: ensure originalPrice exists and all prices are rounded whole dollars
 cart = cart.map(item => {
     if (!item.originalPrice && SALE_ACTIVE) {
-        // Old item without originalPrice — reverse the 20% discount to find original
-        item.originalPrice = Math.round(item.price / (1 - SALE_DISCOUNT));
-    }
-    if (item.originalPrice) {
+        // Old item without originalPrice — price IS the original Square price
+        item.originalPrice = Math.round(item.price);
+        item.price = Math.round(item.price * (1 - SALE_DISCOUNT));
+    } else if (item.originalPrice) {
         item.originalPrice = Math.round(item.originalPrice);
         item.price = SALE_ACTIVE ? Math.round(item.originalPrice * (1 - SALE_DISCOUNT)) : item.originalPrice;
     } else {
