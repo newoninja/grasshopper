@@ -206,34 +206,41 @@ exports.handler = async (event) => {
         const orderId = orderData.order.id;
         const orderTotal = orderData.order.total_money.amount;
 
-        // Process payment
-        const paymentBody = {
-            idempotency_key: `pay-${idempotencyBase}`,
-            source_id: sourceId,
-            amount_money: {
-                amount: orderTotal,
-                currency: 'USD'
-            },
-            order_id: orderId,
-            location_id: locationId
-        };
+        let paymentData = { payment: null };
 
-        const paymentResponse = await fetch(`${SQUARE_BASE_URL}/payments`, {
-            method: 'POST',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(paymentBody)
-        });
+        // If order is free (fully covered by promo), skip payment
+        if (sourceId === 'FREE_ORDER' && orderTotal === 0) {
+            paymentData = { payment: { id: 'FREE', status: 'COMPLETED' } };
+        } else {
+            // Process payment
+            const paymentBody = {
+                idempotency_key: `pay-${idempotencyBase}`,
+                source_id: sourceId,
+                amount_money: {
+                    amount: orderTotal,
+                    currency: 'USD'
+                },
+                order_id: orderId,
+                location_id: locationId
+            };
 
-        const paymentData = await paymentResponse.json();
+            const paymentResponse = await fetch(`${SQUARE_BASE_URL}/payments`, {
+                method: 'POST',
+                headers: {
+                    'Square-Version': '2024-01-18',
+                    'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paymentBody)
+            });
 
-        if (!paymentData.payment || paymentData.payment.status === 'FAILED') {
-            console.error('Payment error:', paymentData);
-            const errorMsg = paymentData.errors?.[0]?.detail || 'Payment failed';
-            return { statusCode: 400, headers, body: JSON.stringify({ error: errorMsg }) };
+            paymentData = await paymentResponse.json();
+
+            if (!paymentData.payment || paymentData.payment.status === 'FAILED') {
+                console.error('Payment error:', paymentData);
+                const errorMsg = paymentData.errors?.[0]?.detail || 'Payment failed';
+                return { statusCode: 400, headers, body: JSON.stringify({ error: errorMsg }) };
+            }
         }
 
         // For pickup orders, send email notification

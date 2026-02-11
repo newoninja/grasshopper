@@ -503,10 +503,27 @@ function showWalletButtons() {
 // Payment Handlers
 // ============================================
 
+function getOrderTotal() {
+    const subtotal = checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
+    const shippingEl = document.getElementById('checkoutShipping');
+    const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
+    const subtotalCents = Math.round(subtotal * 100);
+    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
+    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+    return Math.max(0, subtotalCents + shippingCents + taxCents - discountCents);
+}
+
 async function handlePayment() {
     hidePaymentError();
 
     if (!validateAddress()) return;
+
+    // If total is $0 (fully covered by promo), skip card and process as free order
+    if (getOrderTotal() === 0) {
+        setPayButtonLoading(true);
+        await processPayment('FREE_ORDER');
+        return;
+    }
 
     setPayButtonLoading(true);
 
@@ -528,6 +545,13 @@ async function handlePayment() {
 
 async function handleWalletPayment(walletMethod) {
     hidePaymentError();
+
+    // If total is $0, skip wallet and process as free order
+    if (getOrderTotal() === 0) {
+        setPayButtonLoading(true);
+        await processPayment('FREE_ORDER');
+        return;
+    }
 
     // For wallet payments, address validation is optional since wallets provide address
     setPayButtonLoading(true);
