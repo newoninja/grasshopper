@@ -2442,7 +2442,7 @@ body.mens-mode .ha-rec-reason {
     top: 10px;
     left: 10px;
     z-index: 2;
-    background: #c0392b;
+    background: var(--gray-900);
     color: white;
     font-size: 0.65rem;
     font-weight: 700;
@@ -2463,7 +2463,7 @@ body.mens-mode .ha-rec-reason {
     font-size: 0.9em;
 }
 .price-sale {
-    color: #c0392b;
+    color: var(--lavender-deep);
     font-weight: 600;
 }
 .product-detail-price .price-original {
