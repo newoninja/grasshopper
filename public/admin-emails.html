@@ -160,7 +160,7 @@
             document.getElementById('loginError').style.display = 'none';
 
             // Try fetching emails with the key to validate
-            fetch(`/api/export-emails?key=${encodeURIComponent(adminKey)}`)
+            fetch('/api/export-emails', { headers: { 'X-Admin-Key': adminKey } })
                 .then(res => {
                     if (res.status === 401) {
                         document.getElementById('loginError').style.display = 'block';
@@ -184,7 +184,7 @@
             const tbody = document.getElementById('emailTableBody');
             tbody.innerHTML = '<tr><td colspan="3" class="loading">Loading...</td></tr>';
 
-            fetch(`/api/export-emails?key=${encodeURIComponent(adminKey)}`)
+            fetch('/api/export-emails', { headers: { 'X-Admin-Key': adminKey } })
                 .then(res => res.json())
                 .then(data => displayEmails(data))
                 .catch(() => {
@@ -214,7 +214,16 @@
         }
 
         function downloadCSV() {
-            window.open(`/api/export-emails?key=${encodeURIComponent(adminKey)}&format=csv`, '_blank');
+            fetch('/api/export-emails?format=csv', { headers: { 'X-Admin-Key': adminKey } })
+                .then(res => res.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'newsletter-emails.csv';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
         }
 
         function escapeHtml(text) {

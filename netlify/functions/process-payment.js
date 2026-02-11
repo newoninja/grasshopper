@@ -1,11 +1,13 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const SALE_DISCOUNT = 0.20;
 const { getShippingCost, getProductWeight, getUpsShippingCost } = require('./shipping-data');
 
 exports.handler = async (event) => {
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': SITE_ORIGIN,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json'
     };
@@ -42,9 +44,45 @@ exports.handler = async (event) => {
 
         const locationId = locationData.locations[0].id;
 
-        // Build line items with sale prices (site-wide 20% off is client-side only)
+        // Validate prices against Square catalog before building order
+        for (const item of items) {
+            const qty = parseInt(item.quantity) || 1;
+            if (qty < 1 || qty > 100) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid quantity' }) };
+            }
+            if (!item.variationId) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing product variation' }) };
+            }
+            try {
+                const varResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${item.variationId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Square-Version': '2024-01-18',
+                        'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (varResponse.ok) {
+                    const varData = await varResponse.json();
+                    const catalogPriceCents = varData.object?.item_variation_data?.price_money?.amount;
+                    if (catalogPriceCents) {
+                        const expectedSaleCents = Math.round(catalogPriceCents * (1 - SALE_DISCOUNT));
+                        const clientCents = Math.round((item.price || 0) * 100);
+                        // Allow $2 tolerance for rounding differences
+                        if (Math.abs(clientCents - expectedSaleCents) > 200) {
+                            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Price mismatch. Please refresh and try again.' }) };
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Price validation error:', err);
+                // Continue if validation lookup fails — don't block the order
+            }
+        }
+
+        // Build line items with validated sale prices
         const lineItems = items.map(item => ({
-            quantity: (item.quantity || 1).toString(),
+            quantity: (parseInt(item.quantity) || 1).toString(),
             name: item.name,
             base_price_money: {
                 amount: Math.round((item.price || 0) * 100),

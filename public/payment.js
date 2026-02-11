@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkoutData = loadCheckoutData(mode);
 
     if (!checkoutData || !checkoutData.items.length) {
-        showError('Your cart is empty. Please add items before checking out.');
+        showError('Your cart is empty. Redirecting to shop...');
+        setTimeout(() => window.location.href = 'shop.html', 2000);
         return;
     }
 
@@ -58,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Square payments
     try {
         const config = await fetchConfig();
-        console.log('Square config loaded:', { applicationId: config.applicationId, locationId: config.locationId });
         await initializePayments(config, checkoutData);
     } catch (err) {
         console.error('Payment init error:', err);
@@ -189,7 +189,9 @@ function removeItem(index) {
     checkoutData.items.splice(index, 1);
 
     if (checkoutData.items.length === 0) {
-        showError('Your cart is empty. Please add items before checking out.');
+        syncCartToStorage();
+        showError('Your cart is empty. Redirecting to shop...');
+        setTimeout(() => window.location.href = 'shop.html', 2000);
         return;
     }
 
@@ -395,15 +397,15 @@ function validateAddress() {
     if (!addr.street) missing.push('street address');
     if (!addr.city) missing.push('city');
     if (!addr.state) missing.push('state');
-    if (!addr.zip || addr.zip.length !== 5) missing.push('ZIP code');
+    if (!addr.zip || !/^\d{5}$/.test(addr.zip)) missing.push('ZIP code');
 
     if (missing.length) {
         showPaymentError('Please fill in: ' + missing.join(', '));
         return false;
     }
 
-    // Basic email check
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr.email)) {
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(addr.email)) {
         showPaymentError('Please enter a valid email address');
         return false;
     }

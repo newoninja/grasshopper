@@ -1,9 +1,10 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
 
 exports.handler = async (event) => {
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': SITE_ORIGIN,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json'
     };

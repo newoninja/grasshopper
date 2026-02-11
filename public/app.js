@@ -74,7 +74,7 @@ async function checkPickupEligibility() {
     const zipCode = document.getElementById('pickupZip').value.trim();
     const resultDiv = document.getElementById('pickupResult');
 
-    if (!zipCode || zipCode.length !== 5) {
+    if (!zipCode || !/^\d{5}$/.test(zipCode)) {
         resultDiv.innerHTML = '<p class="pickup-error">Please enter a valid 5-digit zip code</p>';
         return;
     }
@@ -122,7 +122,8 @@ async function confirmPickup() {
     const phoneInput = document.getElementById('pickupPhoneInput');
     const phone = phoneInput?.value.trim();
 
-    if (!phone || phone.length < 10) {
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (!phone || phoneDigits.length < 10) {
         alert('Please enter a valid phone number');
         return;
     }
@@ -228,21 +229,29 @@ function escapeHtml(text) {
 // Cart Functions
 // ============================================
 
-function addToCart(productId) {
+function addToCart(productId, variationId, variationName, variationPrice) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
 
-    const existingItem = cart.find(item => item.id === productId);
+    // Use variation overrides if provided (from product detail page)
+    const itemVariationId = variationId || product.variationId;
+    const itemName = variationName || product.name;
+    const itemPrice = variationPrice || product.price;
+
+    // For variants, use a unique key combining product + variation
+    const cartKey = variationId ? `${productId}_${variationId}` : productId;
+    const existingItem = cart.find(item => (item.cartKey || item.id) === cartKey);
 
     if (existingItem) {
         existingItem.quantity++;
     } else {
         cart.push({
             id: product.id,
-            variationId: product.variationId,
-            name: product.name,
-            price: salePrice(product.price),
-            originalPrice: Math.round(product.price),
+            cartKey: cartKey,
+            variationId: itemVariationId,
+            name: itemName,
+            price: salePrice(itemPrice),
+            originalPrice: Math.round(itemPrice),
             imageUrl: product.imageUrl,
             quantity: 1
         });
@@ -253,18 +262,18 @@ function addToCart(productId) {
     showToast('Added to cart!');
 }
 
-function removeFromCart(productId) {
-    cart = cart.filter(item => item.id !== productId);
+function removeFromCart(cartKey) {
+    cart = cart.filter(item => (item.cartKey || item.id) !== cartKey);
     saveCart();
     updateCartUI();
 }
 
-function updateQuantity(productId, delta) {
-    const item = cart.find(item => item.id === productId);
+function updateQuantity(cartKey, delta) {
+    const item = cart.find(item => (item.cartKey || item.id) === cartKey);
     if (!item) return;
-    item.quantity += delta;
+    item.quantity = Math.max(0, Math.round(item.quantity + delta));
     if (item.quantity <= 0) {
-        removeFromCart(productId);
+        removeFromCart(cartKey);
     } else {
         saveCart();
         updateCartUI();
@@ -310,10 +319,10 @@ function updateCartUI() {
                 <a href="product.html?id=${item.id}" class="cart-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
                 <p class="cart-item-price">${item.originalPrice && SALE_ACTIVE ? salePriceHtml(item.originalPrice) : `$${Math.round(item.price)}`}</p>
                 <div class="cart-item-actions">
-                    <button class="quantity-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
+                    <button class="quantity-btn" onclick="updateQuantity('${item.cartKey || item.id}', -1)">−</button>
                     <span class="cart-item-quantity">${item.quantity}</span>
-                    <button class="quantity-btn" onclick="updateQuantity('${item.id}', 1)">+</button>
-                    <button class="cart-item-remove" onclick="removeFromCart('${item.id}')">Remove</button>
+                    <button class="quantity-btn" onclick="updateQuantity('${item.cartKey || item.id}', 1)">+</button>
+                    <button class="cart-item-remove" onclick="removeFromCart('${item.cartKey || item.id}')">Remove</button>
                 </div>
             </div>
         </div>
@@ -373,7 +382,7 @@ async function handleSearch(event) {
                 </div>
                 <div class="search-result-info">
                     <p class="search-result-name">${escapeHtml(product.name)}</p>
-                    <p class="search-result-price">$${product.price.toFixed(2)}</p>
+                    <p class="search-result-price">${salePriceHtml(product.price)}</p>
                 </div>
             </div>
         `).join('');
@@ -412,14 +421,22 @@ function showToast(message) {
 // ============================================
 
 function openMobileMenu() {
-    document.querySelector('.mobile-menu')?.classList.add('active');
-    document.querySelector('.mobile-menu-overlay')?.classList.add('active');
+    const menu = document.querySelector('.mobile-menu');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+    const btn = document.querySelector('.mobile-menu-btn');
+    menu?.classList.add('active');
+    overlay?.classList.add('active');
+    btn?.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
 }
 
 function closeMobileMenu() {
-    document.querySelector('.mobile-menu')?.classList.remove('active');
-    document.querySelector('.mobile-menu-overlay')?.classList.remove('active');
+    const menu = document.querySelector('.mobile-menu');
+    const overlay = document.querySelector('.mobile-menu-overlay');
+    const btn = document.querySelector('.mobile-menu-btn');
+    menu?.classList.remove('active');
+    overlay?.classList.remove('active');
+    btn?.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
 }
 

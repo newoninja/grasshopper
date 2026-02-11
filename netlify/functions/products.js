@@ -1,8 +1,6 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 
-// Log to help debug
-console.log('Token exists:', !!SQUARE_ACCESS_TOKEN);
 
 const brandPatterns = [
     // Women's brands
@@ -90,11 +88,13 @@ async function fetchCategories() {
     return categories;
 }
 
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+
 exports.handler = async (event) => {
     console.log('Products function called');
 
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': SITE_ORIGIN,
         'Access-Control-Allow-Headers': 'Content-Type',
         'Content-Type': 'application/json'
     };
@@ -104,15 +104,12 @@ exports.handler = async (event) => {
     }
 
     if (!SQUARE_ACCESS_TOKEN) {
-        console.error('SQUARE_ACCESS_TOKEN environment variable is not set');
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Missing Square API token - check Netlify environment variables' })
+            body: JSON.stringify({ error: 'Server configuration error' })
         };
     }
-
-    console.log('Square token exists, fetching products...');
 
     try {
         let allItems = [];

@@ -29,9 +29,10 @@ function netlifyRequest(path) {
 }
 
 exports.handler = async (event) => {
-    // Simple auth check via query param
+    // Auth check via header or query param (header preferred for security)
     const params = event.queryStringParameters || {};
-    if (params.key !== process.env.ADMIN_KEY) {
+    const authKey = event.headers['x-admin-key'] || params.key;
+    if (authKey !== process.env.ADMIN_KEY) {
         return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
