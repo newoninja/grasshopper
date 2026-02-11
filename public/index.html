@@ -100,8 +100,9 @@
 
     <section class="hero">
         <div class="hero-content">
-            <h1 class="hero-title"><span>Salon-Grade Hair Care,</span><span class="accent">Shipped to Your Door</span></h1>
-            <p class="hero-description">The same Olaplex, Bumble and Bumble, and Living Proof your stylist uses — hand-picked by a pro with 32 years behind the chair.</p>
+            <p class="hero-tagline">Professional Hair Care</p>
+            <h1 class="hero-title"><span>Elevate Your</span><span class="accent">Hair Care Routine</span></h1>
+            <p class="hero-description">Olaplex, Bumble and Bumble, Living Proof, and more — hand-picked by a stylist with 32 years behind the chair, shipped straight to you.</p>
             <a href="shop.html" class="hero-cta">Shop Bestsellers</a>
             <a href="hair-analysis.html" class="hero-secondary-cta">or get your hair analyzed free →</a>
             <div class="mode-toggle-container">
@@ -275,19 +276,22 @@
         }
 
         function updateHeroForMode(isMens) {
+            const tagline = document.querySelector('.hero-tagline');
             const title = document.querySelector('.hero-title');
             const description = document.querySelector('.hero-description');
             const shopCta = document.querySelector('.hero-cta');
             const secondaryCta = document.querySelector('.hero-secondary-cta');
 
             if (isMens) {
-                title.innerHTML = '<span>Premium Grooming,</span><span class="accent">Shipped to Your Door</span>';
-                description.textContent = 'The same quality grooming products your barber uses — hand-picked by a pro with 32 years behind the chair.';
+                if (tagline) tagline.textContent = 'Grooming & Style';
+                title.innerHTML = '<span>Elevate Your</span><span class="accent">Grooming Routine</span>';
+                description.textContent = 'Premium grooming products your barber uses — hand-picked by a pro with 32 years behind the chair, shipped straight to you.';
                 shopCta.textContent = 'Shop Men\'s';
                 if (secondaryCta) secondaryCta.style.display = 'none';
             } else {
-                title.innerHTML = '<span>Salon-Grade Hair Care,</span><span class="accent">Shipped to Your Door</span>';
-                description.textContent = 'The same Olaplex, Bumble and Bumble, and Living Proof your stylist uses — hand-picked by a pro with 32 years behind the chair.';
+                if (tagline) tagline.textContent = 'Professional Hair Care';
+                title.innerHTML = '<span>Elevate Your</span><span class="accent">Hair Care Routine</span>';
+                description.textContent = 'Olaplex, Bumble and Bumble, Living Proof, and more — hand-picked by a stylist with 32 years behind the chair, shipped straight to you.';
                 shopCta.textContent = 'Shop Bestsellers';
                 if (secondaryCta) secondaryCta.style.display = '';
             }
