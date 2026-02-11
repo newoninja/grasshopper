@@ -186,8 +186,8 @@
 
                 const hasVariants = currentProduct.variations && currentProduct.variations.length > 1;
                 const priceDisplay = currentProduct.priceRange
-                    ? `$${currentProduct.priceRange.min.toFixed(2)} - $${currentProduct.priceRange.max.toFixed(2)}`
-                    : `$${currentProduct.price.toFixed(2)}`;
+                    ? salePriceRangeHtml(currentProduct.priceRange.min, currentProduct.priceRange.max)
+                    : salePriceHtml(currentProduct.price);
 
                 container.innerHTML = `
                     <nav class="breadcrumbs">
@@ -297,7 +297,7 @@
             const select = document.getElementById('variantSelect');
             const selectedOption = select.options[select.selectedIndex];
             const price = parseFloat(selectedOption.dataset.price);
-            document.getElementById('productPrice').textContent = `$${price.toFixed(2)}`;
+            document.getElementById('productPrice').innerHTML = salePriceHtml(price);
         }
 
         function getSelectedVariationId() {

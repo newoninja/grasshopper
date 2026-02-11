@@ -7,6 +7,26 @@ let allProducts = [];
 let pickupEligible = false;
 let pickupPhone = '';
 
+// Site-wide sale config
+const SALE_ACTIVE = true;
+const SALE_DISCOUNT = 0.20;
+const SALE_LABEL = '20% OFF';
+const SALE_BANNER_TEXT = '20% OFF EVERYTHING — SITE-WIDE SALE';
+
+function salePrice(price) {
+    return SALE_ACTIVE ? price * (1 - SALE_DISCOUNT) : price;
+}
+
+function salePriceHtml(price) {
+    if (!SALE_ACTIVE) return `$${price.toFixed(2)}`;
+    return `<span class="price-original">$${price.toFixed(2)}</span> <span class="price-sale">$${salePrice(price).toFixed(2)}</span>`;
+}
+
+function salePriceRangeHtml(min, max) {
+    if (!SALE_ACTIVE) return `$${min.toFixed(2)} - $${max.toFixed(2)}`;
+    return `<span class="price-original">$${min.toFixed(2)} - $${max.toFixed(2)}</span> <span class="price-sale">$${salePrice(min).toFixed(2)} - $${salePrice(max).toFixed(2)}</span>`;
+}
+
 // ============================================
 // API Functions
 // ============================================
@@ -131,11 +151,13 @@ async function buyNow(variationId) {
     }
 
     const variation = product.variations?.find(v => v.id === variationId);
+    const originalPrice = variation ? variation.price : product.price;
     const quickItem = {
         id: product.id,
         variationId: variationId,
         name: product.name + (variation ? ` - ${variation.name}` : ''),
-        price: variation ? variation.price : product.price,
+        price: salePrice(originalPrice),
+        originalPrice: originalPrice,
         imageUrl: product.imageUrl,
         quantity: 1
     };
@@ -153,16 +175,23 @@ function createProductCard(product, fullSize = false) {
         ? `<img src="${product.imageUrl}" alt="${escapeHtml(product.name)}" loading="lazy">`
         : `<div class="product-image-placeholder">No Image</div>`;
 
+    const priceHtml = product.priceRange
+        ? salePriceRangeHtml(product.priceRange.min, product.priceRange.max)
+        : salePriceHtml(product.price);
+
     return `
         <article class="product-card${fullSize ? ' full-size' : ''}" data-product-id="${product.id}">
             <a href="product.html?id=${product.id}" class="product-image-link">
-                <div class="product-image">${imageHtml}</div>
+                <div class="product-image">
+                    ${SALE_ACTIVE ? `<span class="sale-badge">${SALE_LABEL}</span>` : ''}
+                    ${imageHtml}
+                </div>
             </a>
             <div class="product-info">
                 <a href="product.html?id=${product.id}" class="product-name-link">
                     <h3 class="product-name">${escapeHtml(product.name)}</h3>
                 </a>
-                <p class="product-price">${product.priceRange ? `$${product.priceRange.min.toFixed(2)} - $${product.priceRange.max.toFixed(2)}` : `$${product.price.toFixed(2)}`}</p>
+                <p class="product-price">${priceHtml}</p>
                 <div class="product-review-stars" data-review-id="${product.id}"></div>
                 <div class="product-buttons">
                     <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add</button>
@@ -196,7 +225,8 @@ function addToCart(productId) {
             id: product.id,
             variationId: product.variationId,
             name: product.name,
-            price: product.price,
+            price: salePrice(product.price),
+            originalPrice: product.price,
             imageUrl: product.imageUrl,
             quantity: 1
         });
@@ -239,7 +269,7 @@ function updateCartUI() {
     if (!cartItems) return;
 
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = cart.reduce((sum, item) => sum + (salePrice(item.price) * item.quantity), 0);
 
     if (cartCount) {
         cartCount.textContent = totalItems;
@@ -262,7 +292,7 @@ function updateCartUI() {
             </div>
             <div class="cart-item-details">
                 <p class="cart-item-name">${escapeHtml(item.name)}</p>
-                <p class="cart-item-price">$${item.price.toFixed(2)}</p>
+                <p class="cart-item-price">${item.originalPrice && SALE_ACTIVE ? salePriceHtml(item.originalPrice) : `$${item.price.toFixed(2)}`}</p>
                 <div class="cart-item-actions">
                     <button class="quantity-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
                     <span class="cart-item-quantity">${item.quantity}</span>
@@ -395,6 +425,15 @@ function initBackToTop() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Inject sale banner
+    if (SALE_ACTIVE) {
+        const banner = document.createElement('div');
+        banner.className = 'sale-banner';
+        banner.innerHTML = `<a href="shop.html">${SALE_BANNER_TEXT}</a>`;
+        document.body.prepend(banner);
+        document.body.classList.add('has-sale-banner');
+    }
+
     updateCartUI();
 
     document.querySelector('.cart-toggle')?.addEventListener('click', openCart);

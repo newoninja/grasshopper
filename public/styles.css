@@ -264,6 +264,10 @@ img { max-width: 100%; height: auto; display: block; }
     .hero-secondary-cta { margin-top: 0.75rem; }
     .mode-toggle-container { margin-top: 1rem; }
     .salon-compact img { height: 250px; }
+    .has-sale-banner .hero { padding-top: calc(3.5rem + 60px + 32px); }
+    .has-sale-banner .shop-header { padding-top: calc(3rem + 60px + 32px); }
+    .has-sale-banner .product-page { padding-top: calc(3rem + 60px + 32px); }
+    .sale-banner a { font-size: 0.65rem; }
     .shop-header { padding: calc(3rem + 60px) 1rem 1.5rem; }
     .shop-header .mode-toggle-container { margin-top: 0.5rem !important; }
     .mode-toggle-container .mens-mode-btn,
@@ -2395,6 +2399,78 @@ body.mens-mode .ha-rec-reason {
     .address-field-sm {
         max-width: none;
     }
+}
+
+/* Sale Banner */
+.sale-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: var(--gray-900);
+    text-align: center;
+    padding: 0.5rem 1rem;
+}
+.sale-banner a {
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+.has-sale-banner .nav {
+    top: 32px;
+}
+.has-sale-banner .product-page {
+    padding-top: calc(4rem + 80px + 32px);
+}
+.has-sale-banner .shop-header {
+    padding-top: calc(4rem + 80px + 32px);
+}
+.has-sale-banner .hero {
+    padding-top: calc(6rem + 32px);
+}
+.has-sale-banner .search-overlay {
+    padding-top: calc(15vh + 32px);
+}
+
+/* Sale Badge */
+.sale-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    background: #c0392b;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+.product-image {
+    position: relative;
+}
+
+/* Sale Pricing */
+.price-original {
+    text-decoration: line-through;
+    color: var(--gray-600);
+    font-weight: 400;
+    font-size: 0.9em;
+}
+.price-sale {
+    color: #c0392b;
+    font-weight: 600;
+}
+.product-detail-price .price-original {
+    font-size: 0.85em;
+}
+.product-detail-price .price-sale {
+    font-size: 1.1em;
 }
 
 /* Product Card Review Stars */
