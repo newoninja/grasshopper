@@ -217,7 +217,9 @@
                                         `).join('')}
                                     </select>
                                 </div>
-                            ` : ''}
+                            ` : (currentProduct.variations && currentProduct.variations.length === 1 && currentProduct.variations[0].name && currentProduct.variations[0].name !== 'Regular' ? `
+                                <p class="product-single-variant">Size: ${currentProduct.variations[0].name}</p>
+                            ` : '')}
                             <div class="product-actions">
                                 <button class="buy-now-btn" onclick="handleBuyNow()">Buy Now</button>
                                 <button class="add-to-cart-btn-large" onclick="handleAddToCart()">Add to Cart</button>
