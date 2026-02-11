@@ -42,10 +42,14 @@ exports.handler = async (event) => {
 
         const locationId = locationData.locations[0].id;
 
-        // Build line items
+        // Build line items with sale prices (site-wide 20% off is client-side only)
         const lineItems = items.map(item => ({
             quantity: (item.quantity || 1).toString(),
-            catalog_object_id: item.variationId,
+            name: item.name,
+            base_price_money: {
+                amount: Math.round((item.price || 0) * 100),
+                currency: 'USD'
+            },
             item_type: 'ITEM'
         }));
 
