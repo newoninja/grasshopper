@@ -2,29 +2,41 @@
 // The Grasshopper - Main Application
 // ============================================
 
-let cart = JSON.parse(localStorage.getItem('grasshopper-cart')) || [];
-let allProducts = [];
-let pickupEligible = false;
-let pickupPhone = '';
-
 // Site-wide sale config
 const SALE_ACTIVE = true;
 const SALE_DISCOUNT = 0.20;
 const SALE_LABEL = '20% OFF';
 const SALE_BANNER_TEXT = '20% OFF EVERYTHING — SITE-WIDE SALE';
 
+let cart = JSON.parse(localStorage.getItem('grasshopper-cart')) || [];
+let allProducts = [];
+let pickupEligible = false;
+let pickupPhone = '';
+
+// Migrate old cart items with unrounded prices
+cart = cart.map(item => {
+    if (item.originalPrice && SALE_ACTIVE) {
+        item.price = Math.round(item.originalPrice * (1 - SALE_DISCOUNT));
+    } else {
+        item.price = Math.round(item.price);
+    }
+    if (item.originalPrice) item.originalPrice = Math.round(item.originalPrice);
+    return item;
+});
+localStorage.setItem('grasshopper-cart', JSON.stringify(cart));
+
 function salePrice(price) {
-    return SALE_ACTIVE ? price * (1 - SALE_DISCOUNT) : price;
+    return SALE_ACTIVE ? Math.round(price * (1 - SALE_DISCOUNT)) : Math.round(price);
 }
 
 function salePriceHtml(price) {
     if (!SALE_ACTIVE) return `$${Math.round(price)}`;
-    return `<span class="price-original">$${Math.round(price)}</span> <span class="price-sale">$${salePrice(price).toFixed(2)}</span>`;
+    return `<span class="price-original">$${Math.round(price)}</span> <span class="price-sale">$${salePrice(price)}</span>`;
 }
 
 function salePriceRangeHtml(min, max) {
     if (!SALE_ACTIVE) return `$${Math.round(min)} - $${Math.round(max)}`;
-    return `<span class="price-original">$${Math.round(min)} - $${Math.round(max)}</span> <span class="price-sale">$${salePrice(min).toFixed(2)} - $${salePrice(max).toFixed(2)}</span>`;
+    return `<span class="price-original">$${Math.round(min)} - $${Math.round(max)}</span> <span class="price-sale">$${salePrice(min)} - $${salePrice(max)}</span>`;
 }
 
 // ============================================
@@ -157,7 +169,7 @@ async function buyNow(variationId) {
         variationId: variationId,
         name: product.name + (variation ? ` - ${variation.name}` : ''),
         price: salePrice(originalPrice),
-        originalPrice: originalPrice,
+        originalPrice: Math.round(originalPrice),
         imageUrl: product.imageUrl,
         quantity: 1
     };
@@ -226,7 +238,7 @@ function addToCart(productId) {
             variationId: product.variationId,
             name: product.name,
             price: salePrice(product.price),
-            originalPrice: product.price,
+            originalPrice: Math.round(product.price),
             imageUrl: product.imageUrl,
             quantity: 1
         });
@@ -277,7 +289,7 @@ function updateCartUI() {
     }
 
     if (cartShipping) cartShipping.textContent = totalItems > 0 ? 'Calculated at checkout' : '$0.00';
-    if (cartTotal) cartTotal.textContent = `$${subtotal.toFixed(2)}`;
+    if (cartTotal) cartTotal.textContent = `$${Math.round(subtotal)}`;
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
 
     if (cart.length === 0) {
@@ -287,12 +299,12 @@ function updateCartUI() {
 
     cartItems.innerHTML = cart.map(item => `
         <div class="cart-item">
-            <div class="cart-item-image">
+            <a href="product.html?id=${item.id}" class="cart-item-image" style="cursor:pointer;">
                 ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}">` : ''}
-            </div>
+            </a>
             <div class="cart-item-details">
-                <p class="cart-item-name">${escapeHtml(item.name)}</p>
-                <p class="cart-item-price">${item.originalPrice && SALE_ACTIVE ? salePriceHtml(item.originalPrice) : `$${item.price.toFixed(2)}`}</p>
+                <a href="product.html?id=${item.id}" class="cart-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
+                <p class="cart-item-price">${item.originalPrice && SALE_ACTIVE ? salePriceHtml(item.originalPrice) : `$${Math.round(item.price)}`}</p>
                 <div class="cart-item-actions">
                     <button class="quantity-btn" onclick="updateQuantity('${item.id}', -1)">−</button>
                     <span class="cart-item-quantity">${item.quantity}</span>

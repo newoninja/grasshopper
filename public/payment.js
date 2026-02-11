@@ -119,26 +119,33 @@ function renderOrderSummary(data) {
         return;
     }
 
-    container.innerHTML = data.items.map((item, index) => `
+    container.innerHTML = data.items.map((item, index) => {
+        const qty = item.quantity || 1;
+        const lineTotal = Math.round(item.price || 0) * qty;
+        const hasDiscount = item.originalPrice && item.originalPrice !== item.price;
+        const priceDisplay = hasDiscount
+            ? `<span class="price-original">$${Math.round(item.originalPrice) * qty}</span> <span class="price-sale">$${lineTotal}</span>`
+            : `$${lineTotal}`;
+        return `
         <div class="checkout-item">
-            <div class="checkout-item-image">
+            <a href="product.html?id=${item.id}" class="checkout-item-image" style="cursor:pointer;">
                 ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}">` : ''}
-            </div>
+            </a>
             <div class="checkout-item-info">
-                <p class="checkout-item-name">${escapeHtml(item.name)}</p>
+                <a href="product.html?id=${item.id}" class="checkout-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
                 <div class="checkout-item-controls">
                     <button class="checkout-qty-btn" onclick="changeQty(${index}, -1)">-</button>
-                    <span class="checkout-item-qty">${item.quantity || 1}</span>
+                    <span class="checkout-item-qty">${qty}</span>
                     <button class="checkout-qty-btn" onclick="changeQty(${index}, 1)">+</button>
                     <button class="checkout-remove-btn" onclick="removeItem(${index})">Remove</button>
                 </div>
             </div>
-            <p class="checkout-item-price">$${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</p>
-        </div>
-    `).join('');
+            <p class="checkout-item-price">${priceDisplay}</p>
+        </div>`;
+    }).join('');
 
-    const subtotal = data.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-    subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+    const subtotal = data.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
+    subtotalEl.textContent = `$${subtotal}`;
 }
 
 // ============================================
@@ -227,8 +234,8 @@ async function applyPromo() {
 
         if (data.valid) {
             appliedPromo = data;
-            // Calculate discount on subtotal (not shipping)
-            const subtotal = checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+            // Calculate discount on subtotal + shipping
+            const subtotal = checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
             const shippingEl = document.getElementById('checkoutShipping');
             const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
             const subtotalCents = Math.round(subtotal * 100);
@@ -236,11 +243,12 @@ async function applyPromo() {
                 discountCents = shippingCents;
                 productDiscountCents = 0;
             } else if (data.type === 'percent') {
-                discountCents = Math.round(subtotalCents * data.value / 100);
-                productDiscountCents = discountCents;
+                productDiscountCents = Math.round(subtotalCents * data.value / 100);
+                discountCents = Math.round((subtotalCents + shippingCents) * data.value / 100);
             } else {
-                discountCents = Math.min(data.value, subtotalCents);
-                productDiscountCents = discountCents;
+                // Fixed amount: apply to products first, then shipping
+                productDiscountCents = Math.min(data.value, subtotalCents);
+                discountCents = Math.min(data.value, subtotalCents + shippingCents);
             }
 
             const discountLine = document.getElementById('discountLine');
@@ -325,7 +333,7 @@ async function calculateShipping(items, destinationState) {
 }
 
 function updateTotal() {
-    const subtotal = checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+    const subtotal = checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
@@ -444,7 +452,7 @@ async function initializePayments(config, data) {
 }
 
 function buildPaymentRequest(data) {
-    const subtotal = data.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+    const subtotal = data.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
@@ -535,8 +543,8 @@ async function processPayment(sourceId) {
             body.shippingAddress = address;
         }
 
-        // Add tax (only product discounts reduce taxable amount, not shipping discounts)
-        const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0) * 100);
+        // Tax on product subtotal minus product-portion of discount
+        const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0) * 100);
         const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
         body.taxCents = Math.round(taxableAmount * NC_TAX_RATE);
 
