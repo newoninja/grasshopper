@@ -164,7 +164,7 @@ function createProductCard(product, fullSize = false) {
                 </a>
                 <p class="product-price">${product.priceRange ? `$${product.priceRange.min.toFixed(2)} - $${product.priceRange.max.toFixed(2)}` : `$${product.price.toFixed(2)}`}</p>
                 <div class="product-buttons">
-                    <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add to Cart</button>
+                    <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add</button>
                     <button class="buy-now-btn-small" onclick="event.stopPropagation(); buyNow('${product.variationId}')">Buy Now</button>
                 </div>
             </div>

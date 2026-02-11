@@ -115,6 +115,10 @@
     <main class="shop-main">
         <div class="shop-layout">
             <aside class="filter-sidebar">
+                <button class="mobile-filter-toggle" id="mobileFilterToggle" onclick="toggleMobileFilters()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    Filter by Brand
+                </button>
                 <div class="filter-header">
                     <h3>Brands</h3>
                     <button class="filter-clear" id="clearFilters">Clear</button>
@@ -250,6 +254,13 @@
             selectedBrands.clear();
             document.querySelectorAll('#brandFilters input').forEach(cb => cb.checked = false);
             renderProducts(sortProducts(shopProducts));
+        }
+
+        function toggleMobileFilters() {
+            const btn = document.getElementById('mobileFilterToggle');
+            const list = document.getElementById('brandFilters');
+            btn.classList.toggle('open');
+            list.classList.toggle('mobile-visible');
         }
 
         let allFetchedProducts = [];
