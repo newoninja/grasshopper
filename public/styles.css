@@ -1402,6 +1402,20 @@ body.mens-mode .mens-mode-btn {
     opacity: 0.4;
     cursor: not-allowed;
 }
+.ha-option-row {
+    margin: 1rem auto 0;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--gray-700);
+    font-size: 0.95rem;
+}
+.ha-option-row input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--lavender-deep);
+}
 
 /* Loading State */
 .ha-loading-content {

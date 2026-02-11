@@ -122,6 +122,10 @@
                     <button class="ha-preview-remove" id="removePreview">&times;</button>
                 </div>
             </div>
+            <label class="ha-option-row">
+                <input type="checkbox" id="douxFocusToggle">
+                <span>Focus recommendations on The Doux line</span>
+            </label>
             <button class="ha-analyze-btn" id="analyzeBtn" disabled>Analyze My Hair</button>
         </section>
 
@@ -195,6 +199,7 @@
         const loadingSection = document.getElementById('loadingSection');
         const resultsSection = document.getElementById('resultsSection');
         const errorSection = document.getElementById('errorSection');
+        const douxFocusToggle = document.getElementById('douxFocusToggle');
 
         let selectedImageBase64 = null;
 
@@ -327,7 +332,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         image: selectedImageBase64,
-                        mensMode: document.body.classList.contains('mens-mode')
+                        mensMode: document.body.classList.contains('mens-mode'),
+                        douxFocus: !!douxFocusToggle?.checked
                     })
                 });
 

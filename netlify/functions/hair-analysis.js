@@ -8,6 +8,7 @@ const brandPatterns = [
     { pattern: /^ouai/i, brand: 'OUAI' },
     { pattern: /^living proof/i, brand: 'Living Proof' },
     { pattern: /^cw\s/i, brand: 'Color Wow' },
+    { pattern: /^doux\b/i, brand: 'The Doux' },
     { pattern: /^the doux/i, brand: 'The Doux' },
     { pattern: /^redken brews/i, brand: 'Redken Brews' },
     { pattern: /^american crew/i, brand: 'American Crew' },
@@ -28,6 +29,12 @@ function extractBrand(name) {
         if (pattern.test(name)) return brand;
     }
     return 'Color Wow';
+}
+
+function isDouxProduct(product) {
+    return product.brand === 'The Doux' ||
+        /\bdoux\b/i.test(product.name || '') ||
+        /\bdoux\b/i.test(product.description || '');
 }
 
 async function fetchAllCatalogObjects(type) {
@@ -150,7 +157,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { image, mensMode } = JSON.parse(event.body || '{}');
+        const { image, mensMode, douxFocus } = JSON.parse(event.body || '{}');
 
         if (!image) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'No image provided' }) };
@@ -160,9 +167,19 @@ exports.handler = async (event) => {
         const products = await fetchAllProducts();
 
         // Filter by mode
-        const relevantProducts = mensMode
+        let relevantProducts = mensMode
             ? products.filter(p => p.category === 'Mens Products')
             : products.filter(p => p.category !== 'Mens Products');
+
+        // Optional user-selected The Doux focus (no ethnicity inference).
+        if (douxFocus && !mensMode) {
+            const douxOnly = relevantProducts.filter(isDouxProduct);
+            if (douxOnly.length > 0) relevantProducts = douxOnly;
+        }
+
+        const douxInstruction = (douxFocus && !mensMode)
+            ? '\n- The customer selected The Doux focus. Recommend only The Doux products from the catalog and prioritize a complete routine (cleanse + treat + style).'
+            : '';
 
         // Build product catalog for Claude
         const catalog = relevantProducts.map(p => ({
@@ -191,7 +208,7 @@ TONE & VOICE (CRITICAL):
 
 ANALYSIS INSTRUCTIONS:
 1) Hair Type: Identify straight (Type 1), wavy (Type 2), curly (Type 3), or coily (Type 4), with subtype when visible and density (fine/medium/thick) in positive wording.
-2) Hair Color: Identify natural/color-treated traits, tone (warm/cool/neutral), and compliment what is working.
+2) Hair Color: Be highly specific. Distinguish black/dark brown/medium brown/light brown/blonde/red/copper/auburn/orange/fashion shades. If color looks warm, call out warm terms directly (copper, orange, golden, red-orange) rather than defaulting to brown. Note roots vs mids/ends and natural vs color-treated traits when visible.
 3) Condition: Note where extra care would improve results, using encouraging language and no blunt negatives.
 4) Texture: Identify fine/medium/coarse and porosity if visible; celebrate natural texture.
 
@@ -205,6 +222,8 @@ PRODUCT RECOMMENDATION INSTRUCTIONS (SELLING WITH SERVICE):
 - Keep reasons concise (1-2 sentences each), energetic, and not repetitive.
 - Recommend a balanced routine when possible (care + styling, not all from one function).
 - Do not invent products or IDs.
+- Never infer or mention ethnicity, race, or protected traits from the photo.
+${douxInstruction}
 
 STRICT OUTPUT RULES:
 - Return valid JSON only, no markdown, no extra keys, no commentary outside JSON.
@@ -263,7 +282,7 @@ RESPONSE FORMAT:
                         },
                         {
                             type: 'text',
-                            text: 'Please analyze this hair photo and recommend 3-5 products with strong personalized buy-action reasons.'
+                            text: 'Please analyze this hair photo with specific color naming and recommend 3-5 products with strong personalized buy-action reasons.'
                         }
                     ]
                 }]
@@ -315,6 +334,18 @@ RESPONSE FORMAT:
                 };
             })
             .filter(Boolean);
+
+        // Guarantee The Doux output when user explicitly selected The Doux focus.
+        if (douxFocus && !mensMode && recommendations.length === 0) {
+            const fallbackDoux = relevantProducts
+                .filter(isDouxProduct)
+                .slice(0, 4)
+                .map(product => ({
+                    product,
+                    reason: 'Strong match for your hair goals and a great add-to-cart pick to start seeing results this week.'
+                }));
+            recommendations.push(...fallbackDoux);
+        }
 
         return {
             statusCode: 200,
