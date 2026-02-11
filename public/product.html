@@ -120,6 +120,14 @@
                             </div>
                         </div>
                         <textarea id="reviewText" placeholder="Share your experience (optional)" class="review-textarea" rows="3"></textarea>
+                        <div class="review-image-upload">
+                            <label for="reviewImage" class="review-image-label">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                                Add Photo
+                            </label>
+                            <input type="file" id="reviewImage" accept="image/*" style="display:none">
+                            <div id="reviewImagePreview" class="review-image-preview"></div>
+                        </div>
                         <button type="submit" class="review-submit-btn">Submit Review</button>
                     </form>
                 </div>
@@ -318,6 +326,8 @@
 
         // Reviews
         let selectedRating = 0;
+        let reviewImageData = null;
+        const REVIEWS_INITIAL = 3;
 
         function initReviews(productId) {
             const section = document.getElementById('reviewsSection');
@@ -340,6 +350,25 @@
                 star.addEventListener('mouseleave', () => {
                     document.querySelectorAll('.star-pick').forEach(s => s.classList.remove('hover'));
                 });
+            });
+
+            // Image upload
+            const imageInput = document.getElementById('reviewImage');
+            const preview = document.getElementById('reviewImagePreview');
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) {
+                    imageInput.value = '';
+                    preview.innerHTML = '<span class="review-image-error">Image must be under 2MB</span>';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    reviewImageData = reader.result;
+                    preview.innerHTML = `<div class="review-image-thumb"><img src="${reviewImageData}" alt="Preview"><button type="button" class="review-image-remove" onclick="removeReviewImage()">&times;</button></div>`;
+                };
+                reader.readAsDataURL(file);
             });
 
             // Load reviews
@@ -366,14 +395,16 @@
                     const res = await fetch('/api/reviews', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ productId, name, rating: selectedRating, text })
+                        body: JSON.stringify({ productId, name, rating: selectedRating, text, image: reviewImageData || null })
                     });
                     const reviews = await res.json();
                     if (res.ok) {
                         renderReviews(reviews);
                         e.target.reset();
                         selectedRating = 0;
+                        reviewImageData = null;
                         document.querySelectorAll('.star-pick').forEach(s => s.classList.remove('active'));
+                        preview.innerHTML = '';
                     }
                 } catch (err) {
                     console.error('Error submitting review:', err);
@@ -381,6 +412,12 @@
                 btn.textContent = 'Submit Review';
                 btn.disabled = false;
             });
+        }
+
+        function removeReviewImage() {
+            reviewImageData = null;
+            document.getElementById('reviewImage').value = '';
+            document.getElementById('reviewImagePreview').innerHTML = '';
         }
 
         async function fetchReviews(productId) {
@@ -413,7 +450,25 @@
                 </div>
             `;
 
-            list.innerHTML = reviews.slice().reverse().map(r => `
+            const sorted = reviews.slice().reverse();
+            const showAll = sorted.length <= REVIEWS_INITIAL;
+            const visible = showAll ? sorted : sorted.slice(0, REVIEWS_INITIAL);
+            const hidden = showAll ? [] : sorted.slice(REVIEWS_INITIAL);
+
+            let html = visible.map(r => renderReviewCard(r)).join('');
+
+            if (hidden.length > 0) {
+                html += `<div class="reviews-hidden" id="reviewsHidden" style="display:none">`;
+                html += hidden.map(r => renderReviewCard(r)).join('');
+                html += `</div>`;
+                html += `<button class="reviews-show-more" onclick="toggleMoreReviews(this)">Show All ${sorted.length} Reviews</button>`;
+            }
+
+            list.innerHTML = html;
+        }
+
+        function renderReviewCard(r) {
+            return `
                 <div class="review-card">
                     <div class="review-card-header">
                         <span class="review-author">${escapeHtml(r.name)}</span>
@@ -421,8 +476,16 @@
                         <span class="review-date">${new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                     ${r.text ? `<p class="review-text">${escapeHtml(r.text)}</p>` : ''}
+                    ${r.image ? `<div class="review-image-display"><img src="${r.image}" alt="Review photo" loading="lazy"></div>` : ''}
                 </div>
-            `).join('');
+            `;
+        }
+
+        function toggleMoreReviews(btn) {
+            const hidden = document.getElementById('reviewsHidden');
+            const showing = hidden.style.display !== 'none';
+            hidden.style.display = showing ? 'none' : '';
+            btn.textContent = showing ? `Show All Reviews` : 'Show Less';
         }
 
         function renderStars(rating) {

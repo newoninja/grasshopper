@@ -31,7 +31,7 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === 'POST') {
         try {
-            const { productId, name, rating, text } = JSON.parse(event.body);
+            const { productId, name, rating, text, image } = JSON.parse(event.body);
 
             if (!productId) {
                 return { statusCode: 400, headers, body: JSON.stringify({ error: 'productId required' }) };
@@ -52,12 +52,16 @@ exports.handler = async (event) => {
                 // No existing reviews
             }
 
-            reviews.push({
+            const review = {
                 name: name.trim(),
                 rating: ratingNum,
                 text: (text || '').trim(),
                 date: new Date().toISOString()
-            });
+            };
+            if (image && typeof image === 'string' && image.startsWith('data:image/')) {
+                review.image = image;
+            }
+            reviews.push(review);
 
             await store.set(productId, JSON.stringify(reviews));
 

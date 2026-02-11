@@ -163,6 +163,7 @@ function createProductCard(product, fullSize = false) {
                     <h3 class="product-name">${escapeHtml(product.name)}</h3>
                 </a>
                 <p class="product-price">${product.priceRange ? `$${product.priceRange.min.toFixed(2)} - $${product.priceRange.max.toFixed(2)}` : `$${product.price.toFixed(2)}`}</p>
+                <div class="product-review-stars" data-review-id="${product.id}"></div>
                 <div class="product-buttons">
                     <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add</button>
                     <button class="buy-now-btn-small" onclick="event.stopPropagation(); buyNow('${product.variationId}')">Buy Now</button>
@@ -418,3 +419,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') { closeCart(); closeSearch(); closeMobileMenu(); }
     });
 });
+
+// Review stars on product cards
+const reviewCache = {};
+
+async function loadCardReviews() {
+    const cards = document.querySelectorAll('.product-review-stars[data-review-id]');
+    const ids = [...new Set([...cards].map(c => c.dataset.reviewId))];
+
+    for (const id of ids) {
+        if (reviewCache[id] !== undefined) {
+            applyReviewStars(id, reviewCache[id]);
+            continue;
+        }
+        try {
+            const res = await fetch(`/api/reviews?productId=${encodeURIComponent(id)}`);
+            const reviews = await res.json();
+            reviewCache[id] = reviews;
+            applyReviewStars(id, reviews);
+        } catch (e) {
+            reviewCache[id] = [];
+        }
+    }
+}
+
+function applyReviewStars(productId, reviews) {
+    document.querySelectorAll(`.product-review-stars[data-review-id="${productId}"]`).forEach(el => {
+        if (reviews.length === 0) {
+            el.innerHTML = '';
+            return;
+        }
+        const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+            stars += `<span class="star ${i <= Math.round(avg) ? 'star-filled' : 'star-empty'}">★</span>`;
+        }
+        el.innerHTML = `${stars}<span class="card-review-count">(${reviews.length})</span>`;
+    });
+}
+
+// Auto-load reviews after any grid renders
+const cardObserver = new MutationObserver(() => {
+    if (document.querySelector('.product-review-stars[data-review-id]')) loadCardReviews();
+});
+cardObserver.observe(document.body, { childList: true, subtree: true });
