@@ -70,15 +70,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Data Loading
 // ============================================
 
+function migrateItems(items) {
+    const SALE_ACTIVE = true;
+    const SALE_DISCOUNT = 0.20;
+    return items.map(item => {
+        if (!item.originalPrice && SALE_ACTIVE) {
+            item.originalPrice = Math.round(item.price / (1 - SALE_DISCOUNT));
+        }
+        if (item.originalPrice) {
+            item.originalPrice = Math.round(item.originalPrice);
+            item.price = SALE_ACTIVE ? Math.round(item.originalPrice * (1 - SALE_DISCOUNT)) : item.originalPrice;
+        } else {
+            item.price = Math.round(item.price);
+        }
+        return item;
+    });
+}
+
 function loadCheckoutData(mode) {
-    const cart = JSON.parse(localStorage.getItem('grasshopper-cart')) || [];
+    const cart = migrateItems(JSON.parse(localStorage.getItem('grasshopper-cart')) || []);
 
     if (mode === 'quick') {
         const quickItem = JSON.parse(localStorage.getItem('grasshopper-quick-buy'));
         if (!quickItem) return null;
         return {
             mode: 'quick',
-            items: [quickItem],
+            items: migrateItems([quickItem]),
             phone: null
         };
     }
