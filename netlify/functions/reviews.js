@@ -1,12 +1,9 @@
 const { connectLambda, getStore } = require('@netlify/blobs');
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const { buildCorsHeaders, jsonResponse, methodNotAllowed, parseJsonBody } = require('./request-utils');
 
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': SITE_ORIGIN,
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+    const headers = buildCorsHeaders(SITE_ORIGIN);
 
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
@@ -18,31 +15,34 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'GET') {
         const productId = event.queryStringParameters?.productId;
         if (!productId) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'productId required' }) };
+            return jsonResponse(400, headers, { error: 'productId required' });
         }
 
         try {
             const data = await store.get(productId);
             const reviews = data ? JSON.parse(data) : [];
-            return { statusCode: 200, headers, body: JSON.stringify(reviews) };
+            return jsonResponse(200, headers, reviews);
         } catch (e) {
-            return { statusCode: 200, headers, body: JSON.stringify([]) };
+            return jsonResponse(200, headers, []);
         }
     }
 
     if (event.httpMethod === 'POST') {
+        const parsed = parseJsonBody(event, headers);
+        if (!parsed.ok) return parsed.response;
+
         try {
-            const { productId, name, rating, text, image } = JSON.parse(event.body);
+            const { productId, name, rating, text, image } = parsed.body;
 
             if (!productId) {
-                return { statusCode: 400, headers, body: JSON.stringify({ error: 'productId required' }) };
+                return jsonResponse(400, headers, { error: 'productId required' });
             }
             if (!name || !name.trim()) {
-                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Name is required' }) };
+                return jsonResponse(400, headers, { error: 'Name is required' });
             }
             const ratingNum = parseInt(rating);
             if (!ratingNum || ratingNum < 1 || ratingNum > 5) {
-                return { statusCode: 400, headers, body: JSON.stringify({ error: 'Rating must be 1-5' }) };
+                return jsonResponse(400, headers, { error: 'Rating must be 1-5' });
             }
 
             let reviews = [];
@@ -66,12 +66,12 @@ exports.handler = async (event) => {
 
             await store.set(productId, JSON.stringify(reviews));
 
-            return { statusCode: 200, headers, body: JSON.stringify(reviews) };
+            return jsonResponse(200, headers, reviews);
         } catch (e) {
             console.error('Review POST error:', e);
-            return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to save review' }) };
+            return jsonResponse(500, headers, { error: 'Failed to save review' });
         }
     }
 
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return methodNotAllowed(headers);
 };

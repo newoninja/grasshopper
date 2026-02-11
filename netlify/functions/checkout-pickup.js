@@ -1,26 +1,36 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
-const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'dyette@icloud.com';
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
 const { sendEmail } = require('./gmail-utils');
+const { fetchSquareJson, getLocationId } = require('./square-utils');
+const { buildCorsHeaders, jsonResponse, methodNotAllowed, parseJsonBody } = require('./request-utils');
 
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': SITE_ORIGIN,
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+    const headers = buildCorsHeaders(SITE_ORIGIN);
 
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return methodNotAllowed(headers);
     }
 
+    const parsed = parseJsonBody(event, headers);
+    if (!parsed.ok) return parsed.response;
+
     try {
-        const { items, phone } = JSON.parse(event.body);
+        const { items, phone } = parsed.body;
+        if (!Array.isArray(items) || items.length === 0) {
+            return jsonResponse(400, headers, { error: 'No items provided' });
+        }
+        if (!phone || String(phone).replace(/\D/g, '').length < 10) {
+            return jsonResponse(400, headers, { error: 'Valid phone number required' });
+        }
+        if (!SQUARE_ACCESS_TOKEN) {
+            return jsonResponse(500, headers, { error: 'Checkout service not configured' });
+        }
+        console.log('Legacy endpoint used: checkout-pickup.js');
 
         // Format phone number to E.164 format (Square requirement)
         // Remove all non-numeric characters
@@ -28,22 +38,7 @@ exports.handler = async (event) => {
         // Add +1 for US if not already present
         const formattedPhone = cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`;
 
-        // Get location ID
-        const locationResponse = await fetch(`${SQUARE_BASE_URL}/locations`, {
-            method: 'GET',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const locationData = await locationResponse.json();
-        if (!locationData.locations?.length) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'No Square location found' }) };
-        }
-
-        const locationId = locationData.locations[0].id;
+        const locationId = await getLocationId(SQUARE_ACCESS_TOKEN);
 
         const lineItems = items.map(item => ({
             quantity: item.quantity.toString(),
@@ -52,15 +47,10 @@ exports.handler = async (event) => {
         }));
 
         // Create checkout with NO shipping (local pickup)
-        const checkoutResponse = await fetch(`${SQUARE_BASE_URL}/online-checkout/payment-links`, {
+        const checkoutResponse = await fetchSquareJson(SQUARE_ACCESS_TOKEN, '/online-checkout/payment-links', {
             method: 'POST',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                idempotency_key: `pickup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            body: {
+                idempotency_key: `pickup-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
                 order: {
                     location_id: locationId,
                     line_items: lineItems
@@ -78,13 +68,10 @@ exports.handler = async (event) => {
                 pre_populated_data: {
                     buyer_phone_number: formattedPhone
                 }
-            })
+            }
         });
 
-        const checkoutData = await checkoutResponse.json();
-
-        console.log('Square checkout response status:', checkoutResponse.status);
-        console.log('Square checkout response:', JSON.stringify(checkoutData, null, 2));
+        const checkoutData = checkoutResponse.data;
 
         if (checkoutData.payment_link) {
             // Send email notification
@@ -131,17 +118,13 @@ Order Link: ${checkoutData.payment_link.url}
         } else {
             console.error('Checkout error:', checkoutData);
             const errorMessage = checkoutData.errors?.[0]?.detail || checkoutData.errors?.[0]?.code || 'Failed to create checkout';
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({
-                    error: errorMessage,
-                    details: checkoutData.errors || checkoutData
-                })
-            };
+            return jsonResponse(400, headers, {
+                error: errorMessage,
+                details: checkoutData.errors || checkoutData
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to create pickup checkout' }) };
+        return jsonResponse(500, headers, { error: 'Failed to create pickup checkout' });
     }
 };

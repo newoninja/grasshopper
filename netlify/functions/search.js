@@ -1,5 +1,6 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
-const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
+const { fetchSquareJson, listCatalogObjectsByType } = require('./square-utils');
+const { buildCorsHeaders, jsonResponse, methodNotAllowed } = require('./request-utils');
 
 const brandPatterns = [
     // Women's brands
@@ -33,30 +34,10 @@ function extractBrand(name) {
 
 async function fetchAllImages() {
     const images = {};
-    let cursor = null;
-
-    do {
-        const url = new URL(`${SQUARE_BASE_URL}/catalog/list`);
-        url.searchParams.append('types', 'IMAGE');
-        if (cursor) url.searchParams.append('cursor', cursor);
-
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-        if (data.objects) {
-            data.objects.forEach(img => {
-                if (img.image_data?.url) images[img.id] = img.image_data.url;
-            });
-        }
-        cursor = data.cursor;
-    } while (cursor);
+    const imageObjects = await listCatalogObjectsByType(SQUARE_ACCESS_TOKEN, 'IMAGE');
+    imageObjects.forEach((img) => {
+        if (img.image_data?.url) images[img.id] = img.image_data.url;
+    });
 
     return images;
 }
@@ -64,59 +45,43 @@ async function fetchAllImages() {
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
 
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': SITE_ORIGIN,
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+    const headers = buildCorsHeaders(SITE_ORIGIN);
 
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
+    if (event.httpMethod !== 'GET') {
+        return methodNotAllowed(headers);
+    }
+
+    if (!SQUARE_ACCESS_TOKEN) {
+        return jsonResponse(500, headers, { error: 'Product service not configured' });
+    }
+
     try {
         const query = event.queryStringParameters?.q || '';
-
-        const response = await fetch(`${SQUARE_BASE_URL}/catalog/search`, {
+        const searchResponse = await fetchSquareJson(SQUARE_ACCESS_TOKEN, '/catalog/search', {
             method: 'POST',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+            body: {
                 object_types: ['ITEM'],
                 query: { text_query: { keywords: [query] } }
-            })
+            }
         });
+        if (!searchResponse.ok) {
+            return jsonResponse(502, headers, { error: 'Failed to search catalog' });
+        }
 
-        const data = await response.json();
+        const data = searchResponse.data;
         const images = await fetchAllImages();
 
         // Fetch categories for category mapping
         const categories = {};
         try {
-            let catCursor = null;
-            do {
-                const catUrl = new URL(`${SQUARE_BASE_URL}/catalog/list`);
-                catUrl.searchParams.append('types', 'CATEGORY');
-                if (catCursor) catUrl.searchParams.append('cursor', catCursor);
-                const catResp = await fetch(catUrl.toString(), {
-                    method: 'GET',
-                    headers: {
-                        'Square-Version': '2024-01-18',
-                        'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const catData = await catResp.json();
-                if (catData.objects) {
-                    catData.objects.forEach(cat => {
-                        if (cat.category_data?.name) categories[cat.id] = cat.category_data.name;
-                    });
-                }
-                catCursor = catData.cursor;
-            } while (catCursor);
+            const categoryObjects = await listCatalogObjectsByType(SQUARE_ACCESS_TOKEN, 'CATEGORY');
+            categoryObjects.forEach((cat) => {
+                if (cat.category_data?.name) categories[cat.id] = cat.category_data.name;
+            });
         } catch (e) {
             console.error('Error fetching categories:', e);
         }
@@ -169,9 +134,9 @@ exports.handler = async (event) => {
                 return true;
             });
 
-        return { statusCode: 200, headers, body: JSON.stringify(products) };
+        return jsonResponse(200, headers, products);
     } catch (error) {
         console.error('Error:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to search' }) };
+        return jsonResponse(500, headers, { error: 'Failed to search' });
     }
 };

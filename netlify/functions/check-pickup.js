@@ -41,27 +41,27 @@ const zipCoordinates = {
 };
 
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const { buildCorsHeaders, jsonResponse, methodNotAllowed, parseJsonBody } = require('./request-utils');
 
 exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': SITE_ORIGIN,
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
+  const headers = buildCorsHeaders(SITE_ORIGIN);
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
 
+  if (event.httpMethod !== 'POST') {
+    return methodNotAllowed(headers);
+  }
+
+  const parsed = parseJsonBody(event, headers);
+  if (!parsed.ok) return parsed.response;
+
   try {
-    const { zipCode } = JSON.parse(event.body);
+    const { zipCode } = parsed.body;
 
     if (!zipCode) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Zip code required' })
-      };
+      return jsonResponse(400, headers, { error: 'Zip code required' });
     }
 
     const zip = zipCode.toString().trim();
@@ -71,32 +71,17 @@ exports.handler = async (event) => {
       const coords = zipCoordinates[zip];
       const distance = getDistanceMiles(STORE_LAT, STORE_LON, coords.lat, coords.lon);
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          eligible: distance <= MAX_DISTANCE_MILES,
-          distance: Math.round(distance * 10) / 10
-        })
-      };
+      return jsonResponse(200, headers, {
+        eligible: distance <= MAX_DISTANCE_MILES,
+        distance: Math.round(distance * 10) / 10
+      });
     }
 
     // For unknown zip codes, try to use an external API or return not eligible
     // For now, return not eligible
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        eligible: false,
-        distance: null
-      })
-    };
+    return jsonResponse(200, headers, { eligible: false, distance: null });
   } catch (error) {
     console.error('Error checking pickup eligibility:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Failed to check eligibility' })
-    };
+    return jsonResponse(500, headers, { error: 'Failed to check eligibility' });
   }
 };

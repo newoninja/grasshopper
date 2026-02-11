@@ -43,6 +43,27 @@ function salePriceRangeHtml(min, max) {
     return `<span class="price-original">$${Math.round(min)} - $${Math.round(max)}</span> <span class="price-sale">$${salePrice(min)} - $${salePrice(max)}</span>`;
 }
 
+function escapeAttr(value) {
+    return escapeHtml(String(value || '')).replace(/"/g, '&quot;');
+}
+
+function safeProductHref(productId) {
+    return `product.html?id=${encodeURIComponent(String(productId || ''))}`;
+}
+
+function safeImageUrl(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url, window.location.origin);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href;
+        }
+    } catch (_error) {
+        return '';
+    }
+    return '';
+}
+
 // ============================================
 // API Functions
 // ============================================
@@ -188,8 +209,10 @@ async function buyNow(variationId) {
 // ============================================
 
 function createProductCard(product, fullSize = false) {
-    const imageHtml = product.imageUrl
-        ? `<img src="${product.imageUrl}" alt="${escapeHtml(product.name)}" loading="lazy">`
+    const productHref = safeProductHref(product.id);
+    const imageUrl = safeImageUrl(product.imageUrl);
+    const imageHtml = imageUrl
+        ? `<img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(product.name)}" loading="lazy">`
         : `<div class="product-image-placeholder">No Image</div>`;
 
     const priceHtml = product.priceRange
@@ -198,14 +221,14 @@ function createProductCard(product, fullSize = false) {
 
     return `
         <article class="product-card${fullSize ? ' full-size' : ''}" data-product-id="${product.id}">
-            <a href="product.html?id=${product.id}" class="product-image-link">
+            <a href="${productHref}" class="product-image-link">
                 <div class="product-image">
                     ${SALE_ACTIVE ? `<span class="sale-badge">${SALE_LABEL}</span>` : ''}
                     ${imageHtml}
                 </div>
             </a>
             <div class="product-info">
-                <a href="product.html?id=${product.id}" class="product-name-link">
+                <a href="${productHref}" class="product-name-link">
                     <h3 class="product-name">${escapeHtml(product.name)}</h3>
                 </a>
                 <p class="product-price">${priceHtml}</p>
@@ -232,6 +255,15 @@ function escapeHtml(text) {
 function addToCart(productId, variationId, variationName, variationPrice) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+
+    const hasMultipleVariations = (Array.isArray(product.variations) && product.variations.length > 1) || !!product.priceRange;
+    if (!variationId && hasMultipleVariations) {
+        showToast('Select a size/variation first');
+        setTimeout(() => {
+            window.location.href = safeProductHref(product.id);
+        }, 700);
+        return;
+    }
 
     // Use variation overrides if provided (from product detail page)
     const itemVariationId = variationId || product.variationId;
@@ -312,11 +344,11 @@ function updateCartUI() {
 
     cartItems.innerHTML = cart.map(item => `
         <div class="cart-item">
-            <a href="product.html?id=${item.id}" class="cart-item-image" style="cursor:pointer;">
-                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}">` : ''}
+            <a href="${safeProductHref(item.id)}" class="cart-item-image" style="cursor:pointer;">
+                ${item.imageUrl ? `<img src="${escapeAttr(safeImageUrl(item.imageUrl))}" alt="${escapeAttr(item.name)}">` : ''}
             </a>
             <div class="cart-item-details">
-                <a href="product.html?id=${item.id}" class="cart-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
+                <a href="${safeProductHref(item.id)}" class="cart-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
                 <p class="cart-item-price">${item.originalPrice && SALE_ACTIVE ? salePriceHtml(item.originalPrice) : `$${Math.round(item.price)}`}</p>
                 <div class="cart-item-actions">
                     <button class="quantity-btn" onclick="updateQuantity('${item.cartKey || item.id}', -1)">−</button>
@@ -376,15 +408,15 @@ async function handleSearch(event) {
         }
 
         resultsContainer.innerHTML = results.map(product => `
-            <div class="search-result-item" onclick="goToProduct('${product.id}')">
+            <a class="search-result-item" href="${safeProductHref(product.id)}">
                 <div class="search-result-image">
-                    ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${escapeHtml(product.name)}">` : ''}
+                    ${product.imageUrl ? `<img src="${escapeAttr(safeImageUrl(product.imageUrl))}" alt="${escapeAttr(product.name)}">` : ''}
                 </div>
                 <div class="search-result-info">
                     <p class="search-result-name">${escapeHtml(product.name)}</p>
                     <p class="search-result-price">${salePriceHtml(product.price)}</p>
                 </div>
-            </div>
+            </a>
         `).join('');
 
         allProducts = [...new Map([...allProducts, ...results].map(p => [p.id, p])).values()];
@@ -423,7 +455,7 @@ function showToast(message) {
 function openMobileMenu() {
     const menu = document.querySelector('.mobile-menu');
     const overlay = document.querySelector('.mobile-menu-overlay');
-    const btn = document.querySelector('.mobile-menu-btn');
+    const btn = document.querySelector('.nav-hamburger');
     menu?.classList.add('active');
     overlay?.classList.add('active');
     btn?.setAttribute('aria-expanded', 'true');
@@ -433,7 +465,7 @@ function openMobileMenu() {
 function closeMobileMenu() {
     const menu = document.querySelector('.mobile-menu');
     const overlay = document.querySelector('.mobile-menu-overlay');
-    const btn = document.querySelector('.mobile-menu-btn');
+    const btn = document.querySelector('.nav-hamburger');
     menu?.classList.remove('active');
     overlay?.classList.remove('active');
     btn?.setAttribute('aria-expanded', 'false');
@@ -480,7 +512,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('checkoutBtn')?.addEventListener('click', createCheckout);
 
     // Mobile menu
-    document.querySelector('.nav-hamburger')?.addEventListener('click', openMobileMenu);
+    const navHamburger = document.querySelector('.nav-hamburger');
+    if (navHamburger) {
+        navHamburger.setAttribute('aria-expanded', 'false');
+        navHamburger.addEventListener('click', openMobileMenu);
+    }
     document.querySelector('.mobile-menu-close')?.addEventListener('click', closeMobileMenu);
     document.querySelector('.mobile-menu-overlay')?.addEventListener('click', closeMobileMenu);
 

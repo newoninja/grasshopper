@@ -1,4 +1,6 @@
 const https = require('https');
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const { buildCorsHeaders, getHeader, jsonResponse, methodNotAllowed } = require('./request-utils');
 
 function netlifyRequest(path) {
     return new Promise((resolve, reject) => {
@@ -29,11 +31,19 @@ function netlifyRequest(path) {
 }
 
 exports.handler = async (event) => {
-    // Auth check via header or query param (header preferred for security)
+    const headers = buildCorsHeaders(SITE_ORIGIN);
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers, body: '' };
+    }
+    if (event.httpMethod !== 'GET') {
+        return methodNotAllowed(headers);
+    }
+
+    // Auth check: header only (do not allow query-string secrets)
     const params = event.queryStringParameters || {};
-    const authKey = event.headers['x-admin-key'] || params.key;
+    const authKey = getHeader(event.headers, 'x-admin-key');
     if (authKey !== process.env.ADMIN_KEY) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+        return jsonResponse(401, headers, { error: 'Unauthorized' });
     }
 
     const siteId = process.env.NETLIFY_SITE_ID;
@@ -42,6 +52,7 @@ exports.handler = async (event) => {
     if (!siteId || !token) {
         return {
             statusCode: 500,
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: 'Missing NETLIFY_SITE_ID or NETLIFY_API_TOKEN environment variables' })
         };
     }
@@ -54,6 +65,7 @@ exports.handler = async (event) => {
         if (!newsletterForm) {
             return {
                 statusCode: 404,
+                headers: { ...headers, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ error: 'Newsletter form not found. Make sure the form name is "newsletter".' })
             };
         }
@@ -86,6 +98,7 @@ exports.handler = async (event) => {
             return {
                 statusCode: 200,
                 headers: {
+                    ...headers,
                     'Content-Type': 'text/csv',
                     'Content-Disposition': 'attachment; filename="newsletter-emails.csv"'
                 },
@@ -101,13 +114,14 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ total: emails.length, emails })
         };
     } catch (error) {
-        console.error('Export emails error:', error);
+        console.error('Export emails error:', error.message);
         return {
             statusCode: 500,
+            headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify({ error: error.message })
         };
     }

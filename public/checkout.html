@@ -23,7 +23,7 @@
                 <a href="shop.html" class="nav-link">Shop</a>
             </div>
             <div class="nav-actions">
-                <button class="nav-hamburger" aria-label="Menu">
+                <button class="nav-hamburger" aria-label="Menu" aria-expanded="false">
                     <span></span><span></span><span></span>
                 </button>
             </div>
@@ -32,7 +32,7 @@
 
     <div class="mobile-menu-overlay"></div>
     <div class="mobile-menu">
-        <button class="mobile-menu-close">&times;</button>
+        <button class="mobile-menu-close" aria-label="Close menu">&times;</button>
         <a href="index.html" class="mobile-menu-link">Home</a>
         <a href="shop.html" class="mobile-menu-link">Shop</a>
         <a href="hair-analysis.html" class="mobile-menu-link">Hair Analysis</a>
@@ -190,7 +190,7 @@
                 <h2 class="success-title">Order Confirmed!</h2>
                 <p class="success-message" id="successMessage">Thank you for your purchase. You'll receive a confirmation email shortly.</p>
                 <a href="shop.html" class="success-continue-btn">Continue Shopping</a>
-                <a id="receiptLink" href="#" class="success-receipt-link" style="display: none;" target="_blank">View Receipt</a>
+                <a id="receiptLink" href="#" class="success-receipt-link" style="display: none;" target="_blank" rel="noopener noreferrer">View Receipt</a>
             </div>
 
             <!-- Error State -->
@@ -216,7 +216,7 @@
             <div class="footer-links">
                 <h4>Contact</h4>
                 <a href="tel:8446215787">(844) 621-5787</a>
-                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank">Instagram</a>
+                <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" rel="noopener noreferrer">Instagram</a>
             </div>
             <div class="footer-links">
                 <h4>Info</h4>
@@ -236,6 +236,7 @@
         document.querySelector('.nav-hamburger')?.addEventListener('click', () => {
             document.querySelector('.mobile-menu')?.classList.add('active');
             document.querySelector('.mobile-menu-overlay')?.classList.add('active');
+            document.querySelector('.nav-hamburger')?.setAttribute('aria-expanded', 'true');
             document.body.style.overflow = 'hidden';
         });
         document.querySelector('.mobile-menu-close')?.addEventListener('click', closeMobileMenu);
@@ -244,6 +245,7 @@
         function closeMobileMenu() {
             document.querySelector('.mobile-menu')?.classList.remove('active');
             document.querySelector('.mobile-menu-overlay')?.classList.remove('active');
+            document.querySelector('.nav-hamburger')?.setAttribute('aria-expanded', 'false');
             document.body.style.overflow = '';
         }
     </script>

@@ -1,96 +1,60 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
-const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 const { getShippingCost } = require('./shipping-data');
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const { fetchSquareJson, getCatalogObject, getLocationId } = require('./square-utils');
+const { buildCorsHeaders, jsonResponse, methodNotAllowed, parseJsonBody } = require('./request-utils');
 
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': SITE_ORIGIN,
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+    const headers = buildCorsHeaders(SITE_ORIGIN);
 
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return methodNotAllowed(headers);
     }
 
+    const parsed = parseJsonBody(event, headers);
+    if (!parsed.ok) return parsed.response;
+
     try {
-        const { variationId, quantity = 1 } = JSON.parse(event.body);
-
-        // Get location ID
-        const locationResponse = await fetch(`${SQUARE_BASE_URL}/locations`, {
-            method: 'GET',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const locationData = await locationResponse.json();
-        if (!locationData.locations?.length) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'No Square location found' }) };
+        const { variationId, quantity = 1 } = parsed.body;
+        const qty = Number.parseInt(quantity, 10);
+        if (!variationId || !Number.isFinite(qty) || qty < 1 || qty > 100) {
+            return jsonResponse(400, headers, { error: 'Invalid item payload' });
         }
+        if (!SQUARE_ACCESS_TOKEN) {
+            return jsonResponse(500, headers, { error: 'Checkout service not configured' });
+        }
+        console.log('Legacy endpoint used: checkout-quick.js');
 
-        const locationId = locationData.locations[0].id;
+        const locationId = await getLocationId(SQUARE_ACCESS_TOKEN);
 
         // Get product info to calculate proper shipping
-        let shippingAmount = 750 * quantity; // Default $7.50 per item
+        let shippingAmount = 750 * qty; // Default $7.50 per item
         try {
-            const productResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${variationId}`, {
-                method: 'GET',
-                headers: {
-                    'Square-Version': '2024-01-18',
-                    'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (productResponse.ok) {
-                const productData = await productResponse.json();
-                const variationName = productData.object?.item_variation_data?.name || 'Standard';
-
-                // Get parent item name
-                const itemId = productData.object?.item_variation_data?.item_id;
-                if (itemId) {
-                    const itemResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${itemId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Square-Version': '2024-01-18',
-                            'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (itemResponse.ok) {
-                        const itemData = await itemResponse.json();
-                        const productName = itemData.object?.item_data?.name || '';
-                        const shippingPerUnit = getShippingCost(productName, variationName);
-                        shippingAmount = shippingPerUnit * quantity;
-                    }
-                }
+            const variationObj = await getCatalogObject(SQUARE_ACCESS_TOKEN, variationId);
+            const variationName = variationObj?.item_variation_data?.name || 'Standard';
+            const parentItemId = variationObj?.item_variation_data?.item_id;
+            if (parentItemId) {
+                const parentObj = await getCatalogObject(SQUARE_ACCESS_TOKEN, parentItemId);
+                const productName = parentObj?.item_data?.name || '';
+                const shippingPerUnit = getShippingCost(productName, variationName);
+                shippingAmount = shippingPerUnit * qty;
             }
         } catch (err) {
             console.error('Error fetching product for shipping:', err);
         }
 
-        const checkoutResponse = await fetch(`${SQUARE_BASE_URL}/online-checkout/payment-links`, {
+        const checkoutDataResponse = await fetchSquareJson(SQUARE_ACCESS_TOKEN, '/online-checkout/payment-links', {
             method: 'POST',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                idempotency_key: `quick-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            body: {
+                idempotency_key: `quick-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
                 order: {
                     location_id: locationId,
                     line_items: [{
-                        quantity: quantity.toString(),
+                        quantity: qty.toString(),
                         catalog_object_id: variationId,
                         item_type: 'ITEM'
                     }],
@@ -110,19 +74,19 @@ exports.handler = async (event) => {
                         afterpay_clearpay: false
                     }
                 }
-            })
+            }
         });
 
-        const checkoutData = await checkoutResponse.json();
+        const checkoutData = checkoutDataResponse.data;
 
         if (checkoutData.payment_link) {
-            return { statusCode: 200, headers, body: JSON.stringify({ checkoutUrl: checkoutData.payment_link.url }) };
+            return jsonResponse(200, headers, { checkoutUrl: checkoutData.payment_link.url });
         } else {
             console.error('Checkout error:', checkoutData);
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Failed to create checkout' }) };
+            return jsonResponse(400, headers, { error: 'Failed to create checkout' });
         }
     } catch (error) {
         console.error('Error:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to create checkout' }) };
+        return jsonResponse(500, headers, { error: 'Failed to create checkout' });
     }
 };

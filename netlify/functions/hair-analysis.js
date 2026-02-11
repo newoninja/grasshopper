@@ -1,6 +1,7 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
+const { listCatalogObjectsByType } = require('./square-utils');
+const { buildCorsHeaders, jsonResponse, methodNotAllowed, parseJsonBody } = require('./request-utils');
 
 const brandPatterns = [
     { pattern: /^b&b\s|^bumble/i, brand: 'Bumble and Bumble' },
@@ -60,57 +61,15 @@ function isGenericBrownColor(text) {
         !/(auburn|copper|orange|red|gold|golden|ginger|mahogany|caramel|chestnut|bronze)/i.test(text || '');
 }
 
-async function fetchAllCatalogObjects(type) {
-    const objects = [];
-    let cursor = null;
-    do {
-        const url = new URL(`${SQUARE_BASE_URL}/catalog/list`);
-        url.searchParams.append('types', type);
-        if (cursor) url.searchParams.append('cursor', cursor);
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) throw new Error(`Square API returned ${response.status}`);
-        const data = await response.json();
-        if (data.objects) objects.push(...data.objects);
-        cursor = data.cursor;
-    } while (cursor);
-    return objects;
-}
-
 async function fetchAllProducts() {
-    let allItems = [];
-    let cursor = null;
-    do {
-        const url = new URL(`${SQUARE_BASE_URL}/catalog/list`);
-        url.searchParams.append('types', 'ITEM');
-        if (cursor) url.searchParams.append('cursor', cursor);
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-                'Square-Version': '2024-01-18',
-                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) throw new Error(`Square API returned ${response.status}`);
-        const data = await response.json();
-        if (data.objects) allItems = allItems.concat(data.objects);
-        cursor = data.cursor;
-    } while (cursor);
-
-    const imageObjects = await fetchAllCatalogObjects('IMAGE');
+    const allItems = await listCatalogObjectsByType(SQUARE_ACCESS_TOKEN, 'ITEM');
+    const imageObjects = await listCatalogObjectsByType(SQUARE_ACCESS_TOKEN, 'IMAGE');
     const images = {};
     imageObjects.forEach(img => {
         if (img.image_data?.url) images[img.id] = img.image_data.url;
     });
 
-    const categoryObjects = await fetchAllCatalogObjects('CATEGORY');
+    const categoryObjects = await listCatalogObjectsByType(SQUARE_ACCESS_TOKEN, 'CATEGORY');
     const categories = {};
     categoryObjects.forEach(cat => {
         if (cat.category_data?.name) categories[cat.id] = cat.category_data.name;
@@ -159,33 +118,32 @@ async function fetchAllProducts() {
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
 
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': SITE_ORIGIN,
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+    const headers = buildCorsHeaders(SITE_ORIGIN);
 
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers, body: '' };
     }
 
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+        return methodNotAllowed(headers);
     }
 
     if (!ANTHROPIC_API_KEY) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'AI service not configured' }) };
+        return jsonResponse(500, headers, { error: 'AI service not configured' });
     }
 
     if (!SQUARE_ACCESS_TOKEN) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Product service not configured' }) };
+        return jsonResponse(500, headers, { error: 'Product service not configured' });
     }
 
+    const parsed = parseJsonBody(event, headers);
+    if (!parsed.ok) return parsed.response;
+
     try {
-        const { image, mensMode, douxFocus } = JSON.parse(event.body || '{}');
+        const { image, mensMode, douxFocus } = parsed.body;
 
         if (!image) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'No image provided' }) };
+            return jsonResponse(400, headers, { error: 'No image provided' });
         }
 
         // Fetch all products from Square
@@ -425,20 +383,12 @@ RESPONSE FORMAT:
             finalAnalysis.hairColor = extractedProfile.hairColor;
         }
 
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-                analysis: finalAnalysis,
-                recommendations: dedupedRecommendations.slice(0, 5)
-            })
-        };
+        return jsonResponse(200, headers, {
+            analysis: finalAnalysis,
+            recommendations: dedupedRecommendations.slice(0, 5)
+        });
     } catch (error) {
         console.error('Hair analysis error:', error.message, error.stack);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Something went wrong. Please try again.' })
-        };
+        return jsonResponse(500, headers, { error: 'Something went wrong. Please try again.' });
     }
 };

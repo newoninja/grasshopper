@@ -1,96 +1,71 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
-const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
-const { getShippingCost, getProductWeight, getUpsShippingCost } = require('./shipping-data');
+const { getProductWeight, getUpsShippingCost } = require('./shipping-data');
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shopgrasshopper.com';
+const { getCatalogObject } = require('./square-utils');
+const { buildCorsHeaders, jsonResponse, methodNotAllowed, parseJsonBody } = require('./request-utils');
+
+function normalizeQuantity(value) {
+  const qty = Number.parseInt(value, 10);
+  if (!Number.isFinite(qty) || qty < 1 || qty > 100) return null;
+  return qty;
+}
 
 exports.handler = async (event) => {
-    const headers = {
-        'Access-Control-Allow-Origin': SITE_ORIGIN,
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+  const headers = buildCorsHeaders(SITE_ORIGIN);
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+  if (event.httpMethod !== 'POST') {
+    return methodNotAllowed(headers);
+  }
 
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
+  const parsed = parseJsonBody(event, headers);
+  if (!parsed.ok) return parsed.response;
+
+  try {
+    const { items, destinationState } = parsed.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return jsonResponse(400, headers, { error: 'No items provided' });
+    }
+    const state = String(destinationState || '').trim().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(state)) {
+      return jsonResponse(400, headers, { error: 'Destination state is required' });
+    }
+    if (!SQUARE_ACCESS_TOKEN) {
+      return jsonResponse(500, headers, { error: 'Shipping service not configured' });
     }
 
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+    let totalWeight = 0;
+    for (const item of items) {
+      const variationId = String(item?.variationId || '').trim();
+      const qty = normalizeQuantity(item?.quantity);
+      if (!variationId || !qty) {
+        return jsonResponse(400, headers, { error: 'Invalid item data for shipping' });
+      }
+
+      try {
+        const variationObj = await getCatalogObject(SQUARE_ACCESS_TOKEN, variationId);
+        const variationName = variationObj?.item_variation_data?.name || 'Standard';
+        const itemId = variationObj?.item_variation_data?.item_id;
+        if (!itemId) {
+          return jsonResponse(400, headers, { error: 'Unable to calculate shipping for selected item' });
+        }
+        const parentItem = await getCatalogObject(SQUARE_ACCESS_TOKEN, itemId);
+        const productName = parentItem?.item_data?.name || '';
+        totalWeight += getProductWeight(productName, variationName) * qty;
+      } catch (err) {
+        console.error('Error fetching product for shipping:', err);
+        return jsonResponse(502, headers, { error: 'Unable to calculate shipping for selected item' });
+      }
     }
 
-    try {
-        const { items, destinationState } = JSON.parse(event.body);
-
-        if (!items || !items.length) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'No items provided' }) };
-        }
-
-        let totalWeight = 0;
-
-        for (const item of items) {
-            try {
-                const productResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${item.variationId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Square-Version': '2024-01-18',
-                        'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (productResponse.ok) {
-                    const productData = await productResponse.json();
-                    const variationName = productData.object?.item_variation_data?.name || 'Standard';
-
-                    const itemId = productData.object?.item_variation_data?.item_id;
-                    if (itemId) {
-                        const itemResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${itemId}`, {
-                            method: 'GET',
-                            headers: {
-                                'Square-Version': '2024-01-18',
-                                'Authorization': `Bearer ${SQUARE_ACCESS_TOKEN}`,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        if (itemResponse.ok) {
-                            const itemData = await itemResponse.json();
-                            const productName = itemData.object?.item_data?.name || '';
-                            totalWeight += getProductWeight(productName, variationName) * (item.quantity || 1);
-                        } else {
-                            totalWeight += 1.5 * (item.quantity || 1); // fallback weight
-                        }
-                    } else {
-                        totalWeight += 1.5 * (item.quantity || 1);
-                    }
-                } else {
-                    totalWeight += 1.5 * (item.quantity || 1);
-                }
-            } catch (err) {
-                console.error('Error fetching product for shipping:', err);
-                totalWeight += 1.5 * (item.quantity || 1);
-            }
-        }
-
-        // If destination state provided, use UPS zone-based pricing
-        if (destinationState) {
-            const shippingAmount = getUpsShippingCost(totalWeight, destinationState.toUpperCase());
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({ shippingAmount, totalWeight: Math.round(totalWeight * 10) / 10 })
-            };
-        }
-
-        // Fallback: estimate for zone 5 (mid-range)
-        const shippingAmount = getUpsShippingCost(totalWeight, 'NY');
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({ shippingAmount, totalWeight: Math.round(totalWeight * 10) / 10 })
-        };
-    } catch (error) {
-        console.error('Calculate shipping error:', error);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to calculate shipping' }) };
-    }
+    const shippingAmount = getUpsShippingCost(totalWeight, state);
+    return jsonResponse(200, headers, {
+      shippingAmount,
+      totalWeight: Math.round(totalWeight * 10) / 10
+    });
+  } catch (error) {
+    console.error('Calculate shipping error:', error);
+    return jsonResponse(500, headers, { error: 'Failed to calculate shipping' });
+  }
 };

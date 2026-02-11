@@ -11,6 +11,7 @@ let discountCents = 0;
 let productDiscountCents = 0; // product-only discount for tax calculation
 const NC_TAX_RATE = 0.0725;
 let appliedPromo = null;
+let shippingReady = false;
 
 // ============================================
 // Initialize
@@ -24,8 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkoutData = loadCheckoutData(mode);
 
     if (!checkoutData || !checkoutData.items.length) {
-        showError('Your cart is empty. Redirecting to shop...');
-        setTimeout(() => window.location.href = 'shop.html', 2000);
+        showCheckoutErrorAndRedirect('Your cart is empty. Redirecting to shop...', 'shop.html');
         return;
     }
 
@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mode !== 'pickup') {
         document.getElementById('checkoutShipping').textContent = 'Enter address';
         document.getElementById('checkoutShipping').dataset.cents = '0';
+        document.getElementById('checkoutShipping').dataset.error = 'false';
         updateTotal();
 
         // Recalculate shipping when state changes
@@ -53,6 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } else {
         document.getElementById('checkoutShipping').textContent = '$0.00 (Pickup)';
+        document.getElementById('checkoutShipping').dataset.cents = '0';
+        document.getElementById('checkoutShipping').dataset.error = 'false';
+        shippingReady = true;
         updateTotal();
     }
 
@@ -141,16 +145,18 @@ function renderOrderSummary(data) {
         const qty = item.quantity || 1;
         const lineTotal = Math.round(item.price || 0) * qty;
         const hasDiscount = item.originalPrice && item.originalPrice !== item.price;
+        const productHref = safeProductHref(item.id);
+        const imageUrl = safeImageUrl(item.imageUrl);
         const priceDisplay = hasDiscount
             ? `<span class="price-original">$${Math.round(item.originalPrice) * qty}</span> <span class="price-sale">$${lineTotal}</span>`
             : `$${lineTotal}`;
         return `
         <div class="checkout-item">
-            <a href="product.html?id=${item.id}" class="checkout-item-image" style="cursor:pointer;">
-                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.name)}">` : ''}
+            <a href="${productHref}" class="checkout-item-image" style="cursor:pointer;">
+                ${imageUrl ? `<img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(item.name)}">` : ''}
             </a>
             <div class="checkout-item-info">
-                <a href="product.html?id=${item.id}" class="checkout-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
+                <a href="${productHref}" class="checkout-item-name" style="text-decoration:none;color:inherit;cursor:pointer;">${escapeHtml(item.name)}</a>
                 <div class="checkout-item-controls">
                     <button class="checkout-qty-btn" onclick="changeQty(${index}, -1)">-</button>
                     <span class="checkout-item-qty">${qty}</span>
@@ -190,8 +196,7 @@ function removeItem(index) {
 
     if (checkoutData.items.length === 0) {
         syncCartToStorage();
-        showError('Your cart is empty. Redirecting to shop...');
-        setTimeout(() => window.location.href = 'shop.html', 2000);
+        showCheckoutErrorAndRedirect('Your cart is empty. Redirecting to shop...', 'shop.html');
         return;
     }
 
@@ -215,9 +220,15 @@ async function recalcAndUpdateTotal() {
         if (state) {
             await calculateShipping(checkoutData.items, state);
         } else {
+            shippingReady = false;
+            const shippingEl = document.getElementById('checkoutShipping');
+            shippingEl.textContent = 'Enter address';
+            shippingEl.dataset.cents = '0';
+            shippingEl.dataset.error = 'false';
             updateTotal();
         }
     } else {
+        shippingReady = true;
         updateTotal();
     }
 }
@@ -226,6 +237,25 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function escapeAttr(value) {
+    return escapeHtml(String(value || '')).replace(/"/g, '&quot;');
+}
+
+function safeProductHref(productId) {
+    return `product.html?id=${encodeURIComponent(String(productId || ''))}`;
+}
+
+function safeImageUrl(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url, window.location.origin);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href;
+    } catch (_error) {
+        return '';
+    }
+    return '';
 }
 
 // ============================================
@@ -323,6 +353,8 @@ function removePromo() {
 async function calculateShipping(items, destinationState) {
     const shippingEl = document.getElementById('checkoutShipping');
     shippingEl.textContent = 'Calculating...';
+    shippingEl.dataset.error = 'false';
+    shippingReady = false;
 
     try {
         const body = {
@@ -339,23 +371,33 @@ async function calculateShipping(items, destinationState) {
             body: JSON.stringify(body)
         });
 
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'Unable to calculate shipping');
+        }
+
         const data = await response.json();
+        if (!Number.isFinite(data.shippingAmount)) {
+            throw new Error('Shipping response was invalid');
+        }
         const shippingDollars = (data.shippingAmount || 0) / 100;
         shippingEl.textContent = `$${shippingDollars.toFixed(2)}`;
         shippingEl.dataset.cents = data.shippingAmount || 0;
+        shippingEl.dataset.error = 'false';
+        shippingReady = true;
     } catch (err) {
         console.error('Shipping calc error:', err);
-        // Fallback: $7.50 per item
-        const fallback = items.reduce((sum, item) => sum + (750 * (item.quantity || 1)), 0);
-        const shippingDollars = fallback / 100;
-        shippingEl.textContent = `$${shippingDollars.toFixed(2)}`;
-        shippingEl.dataset.cents = fallback;
+        shippingEl.textContent = 'Unable to calculate';
+        shippingEl.dataset.cents = '0';
+        shippingEl.dataset.error = 'true';
+        shippingReady = false;
+        showPaymentError('Shipping could not be calculated. Confirm your address and try again.');
     }
 
     updateTotal();
 }
 
-function updateTotal() {
+function getOrderMath() {
     const subtotal = checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
@@ -364,11 +406,29 @@ function updateTotal() {
     const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
     const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
-    const total = Math.max(0, totalCents) / 100;
+    return {
+        subtotal,
+        subtotalCents,
+        shippingCents,
+        taxCents,
+        totalCents: Math.max(0, totalCents),
+        totalDollars: Math.max(0, totalCents) / 100
+    };
+}
+
+function updateTotal() {
+    const math = getOrderMath();
 
     const taxEl = document.getElementById('checkoutTax');
-    if (taxEl) taxEl.textContent = `$${(taxCents / 100).toFixed(2)}`;
-    document.getElementById('checkoutTotal').textContent = `$${total.toFixed(2)}`;
+    if (taxEl) taxEl.textContent = `$${(math.taxCents / 100).toFixed(2)}`;
+    document.getElementById('checkoutTotal').textContent = `$${math.totalDollars.toFixed(2)}`;
+
+    const payBtn = document.getElementById('payButton');
+    if (payBtn) {
+        const shippingError = document.getElementById('checkoutShipping').dataset.error === 'true';
+        const shippingBlocked = checkoutData.mode !== 'pickup' && (!shippingReady || shippingError);
+        payBtn.disabled = shippingBlocked;
+    }
 }
 
 // ============================================
@@ -440,8 +500,8 @@ async function initializePayments(config, data) {
 
     // Enable pay button
     const payBtn = document.getElementById('payButton');
-    payBtn.disabled = false;
     payBtn.addEventListener('click', handlePayment);
+    updateTotal();
 
     // Initialize Apple Pay
     try {
@@ -476,14 +536,8 @@ async function initializePayments(config, data) {
 }
 
 function buildPaymentRequest(data) {
-    const subtotal = data.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
-    const shippingEl = document.getElementById('checkoutShipping');
-    const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
-    const subtotalCents = Math.round(subtotal * 100);
-    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
-    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
-    const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
-    const total = (Math.max(0, totalCents) / 100).toFixed(2);
+    const math = getOrderMath();
+    const total = math.totalDollars.toFixed(2);
 
     return payments.paymentRequest({
         countryCode: 'US',
@@ -504,19 +558,25 @@ function showWalletButtons() {
 // ============================================
 
 function getOrderTotal() {
-    const subtotal = checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0);
-    const shippingEl = document.getElementById('checkoutShipping');
-    const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
-    const subtotalCents = Math.round(subtotal * 100);
-    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
-    const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
-    return Math.max(0, subtotalCents + shippingCents + taxCents - discountCents);
+    return getOrderMath().totalCents;
+}
+
+function ensureCheckoutReadyForPayment() {
+    if (checkoutData.mode !== 'pickup') {
+        if (!validateAddress()) return false;
+        const shippingError = document.getElementById('checkoutShipping').dataset.error === 'true';
+        if (!shippingReady || shippingError) {
+            showPaymentError('Shipping must be calculated before payment. Please confirm your address and try again.');
+            return false;
+        }
+    }
+    return true;
 }
 
 async function handlePayment() {
     hidePaymentError();
 
-    if (!validateAddress()) return;
+    if (!ensureCheckoutReadyForPayment()) return;
 
     // If total is $0 (fully covered by promo), skip card and process as free order
     if (getOrderTotal() === 0) {
@@ -546,6 +606,8 @@ async function handlePayment() {
 async function handleWalletPayment(walletMethod) {
     hidePaymentError();
 
+    if (!ensureCheckoutReadyForPayment()) return;
+
     // If total is $0, skip wallet and process as free order
     if (getOrderTotal() === 0) {
         setPayButtonLoading(true);
@@ -553,7 +615,6 @@ async function handleWalletPayment(walletMethod) {
         return;
     }
 
-    // For wallet payments, address validation is optional since wallets provide address
     setPayButtonLoading(true);
 
     try {
@@ -591,10 +652,8 @@ async function processPayment(sourceId) {
             body.shippingAddress = address;
         }
 
-        // Only "WHYNOT" promo reduces taxable amount
-        const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + (Math.round(item.price || 0) * (item.quantity || 1)), 0) * 100);
-        const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
-        body.taxCents = Math.round(taxableAmount * NC_TAX_RATE);
+        const math = getOrderMath();
+        body.taxCents = math.taxCents;
 
         if (appliedPromo) {
             body.promoCode = appliedPromo.code;
@@ -673,6 +732,13 @@ function showError(message) {
     const errorDiv = document.getElementById('checkoutError');
     document.getElementById('errorMessage').textContent = message;
     errorDiv.style.display = 'block';
+}
+
+function showCheckoutErrorAndRedirect(message, redirectPath) {
+    showError(message);
+    setTimeout(() => {
+        window.location.href = redirectPath;
+    }, 2000);
 }
 
 function clearCheckoutData() {
