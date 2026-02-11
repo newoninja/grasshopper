@@ -46,7 +46,7 @@
     </nav>
 
     <div class="mobile-menu-overlay"></div>
-    <div class="mobile-menu">
+    <div class="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <button class="mobile-menu-close">&times;</button>
         <a href="index.html" class="mobile-menu-link">Home</a>
         <a href="shop.html" class="mobile-menu-link">Shop</a>
@@ -55,7 +55,7 @@
         <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">Instagram</a>
     </div>
 
-    <div class="search-overlay">
+    <div class="search-overlay" role="dialog" aria-modal="true" aria-label="Search">
         <div class="search-container">
             <button class="search-close">&times;</button>
             <form class="search-form" onsubmit="handleSearch(event)">
@@ -67,7 +67,7 @@
     </div>
 
     <div class="cart-overlay"></div>
-    <aside class="cart-sidebar">
+    <aside class="cart-sidebar" role="dialog" aria-modal="true" aria-label="Shopping cart">
         <div class="cart-header">
             <h2>Your Cart</h2>
             <button class="cart-close">&times;</button>
@@ -84,7 +84,7 @@
     </aside>
 
     <div class="pickup-overlay" onclick="closePickupModal()"></div>
-    <div class="pickup-modal">
+    <div class="pickup-modal" role="dialog" aria-modal="true" aria-label="Local Pickup">
         <div class="pickup-content">
             <button class="pickup-close" onclick="closePickupModal()">&times;</button>
             <h2>Local Pickup</h2>
@@ -103,7 +103,7 @@
             <h1 class="about-page-title">Meet D'yette</h1>
         </header>
 
-        <section class="about-page-hero">
+        <section class="about-page-hero" data-reveal>
             <div class="about-page-image">
                 <img src="about-me.jpg" alt="D'yette Spain, professional stylist">
             </div>
@@ -115,21 +115,21 @@
         </section>
 
         <section class="about-page-credentials">
-            <div class="credential-card">
+            <div class="credential-card" data-reveal data-reveal-delay="0s">
                 <span class="credential-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 15l-2 5l4-2l4 2l-2-5"/><circle cx="12" cy="8" r="6"/></svg>
                 </span>
                 <h3>Vidal Sassoon Academy</h3>
                 <p>Trained in London at the academy that revolutionized modern hairstyling. Sassoon's precision cutting techniques remain the gold standard in the industry.</p>
             </div>
-            <div class="credential-card">
+            <div class="credential-card" data-reveal data-reveal-delay="0.1s">
                 <span class="credential-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>
                 </span>
                 <h3>Redken Certified Colorist</h3>
                 <p>After over a decade working backstage with Redken, D'yette earned their professional hair color certification — a distinction recognizing advanced expertise in color formulation and application.</p>
             </div>
-            <div class="credential-card">
+            <div class="credential-card" data-reveal data-reveal-delay="0.2s">
                 <span class="credential-icon">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </span>
@@ -138,7 +138,7 @@
             </div>
         </section>
 
-        <section class="about-page-philosophy">
+        <section class="about-page-philosophy" data-reveal>
             <h2>The Grasshopper Philosophy</h2>
             <p>Every product in the shop is hand-picked by D'yette — the same salon-quality brands she trusts and uses on her clients every day. She believes that professional products shouldn't be a luxury reserved for salon visits. Whether you're maintaining color between appointments, repairing damage, or simply want your hair to look and feel its best, D'yette has curated a collection that delivers real results.</p>
             <p>She provides expert advice on product selection, hair care, and style and supports each client's unique beauty and wellness journey.</p>
@@ -150,7 +150,7 @@
             </div>
         </section>
 
-        <section class="about-page-contact">
+        <section class="about-page-contact" data-reveal>
             <h2>Get in Touch</h2>
             <p>Questions about products or want to book an appointment? D'yette would love to hear from you.</p>
             <div class="about-contact-links">

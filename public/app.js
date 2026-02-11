@@ -85,8 +85,13 @@ async function fetchProduct(id) {
     return await response.json();
 }
 
+let searchAbortController = null;
 async function searchProducts(query) {
-    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    if (searchAbortController) searchAbortController.abort();
+    searchAbortController = new AbortController();
+    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+        signal: searchAbortController.signal
+    });
     if (!response.ok) throw new Error('Failed to search');
     return await response.json();
 }
@@ -143,7 +148,7 @@ async function confirmPickup() {
     const phoneInput = document.getElementById('pickupPhoneInput');
     const phone = phoneInput?.value.trim();
 
-    const phoneDigits = phone.replace(/\D/g, '');
+    const phoneDigits = (phone || '').replace(/\D/g, '');
     if (!phone || phoneDigits.length < 10) {
         alert('Please enter a valid phone number');
         return;
@@ -329,8 +334,15 @@ function updateCartUI() {
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     if (cartCount) {
+        const prevCount = parseInt(cartCount.textContent, 10) || 0;
         cartCount.textContent = totalItems;
         cartCount.classList.toggle('visible', totalItems > 0);
+        if (totalItems > prevCount) {
+            cartCount.classList.remove('bump');
+            // Force reflow to restart animation
+            void cartCount.offsetWidth;
+            cartCount.classList.add('bump');
+        }
     }
 
     if (cartShipping) cartShipping.textContent = totalItems > 0 ? 'Calculated at checkout' : '$0.00';
@@ -392,12 +404,19 @@ function closeSearch() {
     if (results) results.innerHTML = '';
 }
 
+let searchDebounceTimer = null;
 async function handleSearch(event) {
     event.preventDefault();
     const query = document.getElementById('searchInput').value.trim();
     const resultsContainer = document.getElementById('searchResults');
     if (!query) return;
 
+    // Debounce: cancel pending timer and set a new one
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => executeSearch(query, resultsContainer), 300);
+}
+
+async function executeSearch(query, resultsContainer) {
     resultsContainer.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
 
     try {
@@ -421,6 +440,7 @@ async function handleSearch(event) {
 
         allProducts = [...new Map([...allProducts, ...results].map(p => [p.id, p])).values()];
     } catch (error) {
+        if (error.name === 'AbortError') return; // Request was superseded
         resultsContainer.innerHTML = '<p class="search-no-results">Search failed. Please try again.</p>';
     }
 }
@@ -525,6 +545,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') { closeCart(); closeSearch(); closeMobileMenu(); }
+    });
+
+    // Scroll-reveal observer for [data-reveal] elements
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('[data-reveal]').forEach((el, i) => {
+        const delay = el.dataset.revealDelay;
+        if (delay) el.style.setProperty('--reveal-delay', delay);
+        revealObserver.observe(el);
     });
 });
 

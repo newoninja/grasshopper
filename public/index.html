@@ -46,7 +46,7 @@
     </nav>
 
     <div class="mobile-menu-overlay"></div>
-    <div class="mobile-menu">
+    <div class="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <button class="mobile-menu-close">&times;</button>
         <a href="index.html" class="mobile-menu-link">Home</a>
         <a href="shop.html" class="mobile-menu-link">Shop</a>
@@ -60,7 +60,7 @@
         </div>
     </div>
 
-    <div class="search-overlay">
+    <div class="search-overlay" role="dialog" aria-modal="true" aria-label="Search">
         <div class="search-container">
             <button class="search-close">&times;</button>
             <form class="search-form" onsubmit="handleSearch(event)">
@@ -72,7 +72,7 @@
     </div>
 
     <div class="cart-overlay"></div>
-    <aside class="cart-sidebar">
+    <aside class="cart-sidebar" role="dialog" aria-modal="true" aria-label="Shopping cart">
         <div class="cart-header">
             <h2>Your Cart</h2>
             <button class="cart-close">&times;</button>
@@ -89,7 +89,7 @@
     </aside>
 
     <div class="pickup-overlay" onclick="closePickupModal()"></div>
-    <div class="pickup-modal">
+    <div class="pickup-modal" role="dialog" aria-modal="true" aria-label="Local Pickup">
         <div class="pickup-content">
             <button class="pickup-close" onclick="closePickupModal()">&times;</button>
             <h2>Local Pickup</h2>
@@ -104,7 +104,7 @@
     </div>
 
     <section class="hero">
-        <div class="hero-content">
+        <div class="hero-content" data-reveal>
             <p class="hero-tagline">Professional Hair Care</p>
             <h1 class="hero-title"><span>Elevate Your</span><span class="accent">Hair Care Routine</span></h1>
             <p class="hero-description">Olaplex, Bumble and Bumble, Living Proof, and more — hand-picked by a stylist with 32 years behind the chair, shipped straight to you.</p>
@@ -122,7 +122,7 @@
         </div>
     </section>
 
-    <section class="brand-bar">
+    <section class="brand-bar" data-reveal>
         <div class="brand-bar-container">
             <span class="brand-bar-item">Olaplex</span>
             <span class="brand-bar-sep">&middot;</span>
@@ -136,7 +136,7 @@
         </div>
     </section>
 
-    <section class="featured">
+    <section class="featured" data-reveal>
         <div class="section-header">
             <h2 class="section-title">Bestsellers</h2>
             <p class="section-subtitle">The products our clients keep coming back for.</p>
@@ -145,7 +145,7 @@
         <div class="featured-cta"><a href="shop.html" class="view-all-btn-full">View All Products →</a></div>
     </section>
 
-    <section class="ha-promo-section">
+    <section class="ha-promo-section" data-reveal>
         <div class="ha-promo-content">
             <h2 class="ha-promo-title">Not Sure What Your Hair Needs?</h2>
             <p class="ha-promo-desc">Upload a photo. Get personalized product picks in 30 seconds.</p>
@@ -153,7 +153,7 @@
         </div>
     </section>
 
-    <section class="why-buy">
+    <section class="why-buy" data-reveal>
         <div class="why-buy-grid">
             <div class="why-buy-item">
                 <div class="why-buy-icon">
@@ -179,7 +179,7 @@
         </div>
     </section>
 
-    <section class="salon-section">
+    <section class="salon-section" data-reveal>
         <div class="salon-compact">
             <img src="site-photo.png" alt="The Grasshopper Salon in Charlotte, NC" loading="lazy">
             <div class="salon-overlay">
@@ -189,7 +189,7 @@
         </div>
     </section>
 
-    <section class="about-section" id="about">
+    <section class="about-section" id="about" data-reveal>
         <div class="about-content">
             <div class="about-image"><img src="about-me.jpg" alt="D'yette Spain"></div>
             <div class="about-text">
@@ -209,7 +209,7 @@
         </div>
     </section>
 
-    <section class="newsletter-section">
+    <section class="newsletter-section" data-reveal>
         <div class="newsletter-content">
             <h2>20% Off Everything — Site-Wide Sale</h2>
             <p>Use code <strong>GRASSHOPPER20</strong> at checkout for 20% off your entire order.</p>

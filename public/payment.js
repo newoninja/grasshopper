@@ -350,7 +350,9 @@ function removePromo() {
 // Shipping Calculation
 // ============================================
 
+let shippingRequestId = 0;
 async function calculateShipping(items, destinationState) {
+    const currentRequestId = ++shippingRequestId;
     const shippingEl = document.getElementById('checkoutShipping');
     shippingEl.textContent = 'Calculating...';
     shippingEl.dataset.error = 'false';
@@ -371,6 +373,9 @@ async function calculateShipping(items, destinationState) {
             body: JSON.stringify(body)
         });
 
+        // Discard stale response if a newer request was fired
+        if (currentRequestId !== shippingRequestId) return;
+
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.error || 'Unable to calculate shipping');
@@ -386,6 +391,7 @@ async function calculateShipping(items, destinationState) {
         shippingEl.dataset.error = 'false';
         shippingReady = true;
     } catch (err) {
+        if (currentRequestId !== shippingRequestId) return;
         console.error('Shipping calc error:', err);
         shippingEl.textContent = 'Unable to calculate';
         shippingEl.dataset.cents = '0';
@@ -699,11 +705,12 @@ function setPayButtonLoading(loading) {
 function showPaymentError(message) {
     const errDiv = document.getElementById('paymentErrors');
     errDiv.textContent = message;
-    errDiv.style.display = 'block';
+    // Use class-based transition instead of display toggle
+    requestAnimationFrame(() => errDiv.classList.add('visible'));
 }
 
 function hidePaymentError() {
-    document.getElementById('paymentErrors').style.display = 'none';
+    document.getElementById('paymentErrors').classList.remove('visible');
 }
 
 function showSuccess(data) {
@@ -712,6 +719,9 @@ function showSuccess(data) {
 
     const successDiv = document.getElementById('checkoutSuccess');
     successDiv.style.display = 'block';
+    // Trigger reflow, then add visible class for CSS transition
+    void successDiv.offsetWidth;
+    successDiv.classList.add('visible');
 
     if (checkoutData.mode === 'pickup') {
         document.getElementById('successMessage').textContent =
@@ -732,6 +742,9 @@ function showError(message) {
     const errorDiv = document.getElementById('checkoutError');
     document.getElementById('errorMessage').textContent = message;
     errorDiv.style.display = 'block';
+    // Trigger reflow, then add visible class for CSS transition
+    void errorDiv.offsetWidth;
+    errorDiv.classList.add('visible');
 }
 
 function showCheckoutErrorAndRedirect(message, redirectPath) {

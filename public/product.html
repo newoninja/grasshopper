@@ -46,7 +46,7 @@
     </nav>
 
     <div class="mobile-menu-overlay"></div>
-    <div class="mobile-menu">
+    <div class="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <button class="mobile-menu-close">&times;</button>
         <a href="index.html" class="mobile-menu-link">Home</a>
         <a href="shop.html" class="mobile-menu-link">Shop</a>
@@ -55,7 +55,7 @@
         <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">Instagram</a>
     </div>
 
-    <div class="search-overlay">
+    <div class="search-overlay" role="dialog" aria-modal="true" aria-label="Search">
         <div class="search-container">
             <button class="search-close">&times;</button>
             <form class="search-form" onsubmit="handleSearch(event)">
@@ -67,7 +67,7 @@
     </div>
 
     <div class="cart-overlay"></div>
-    <aside class="cart-sidebar">
+    <aside class="cart-sidebar" role="dialog" aria-modal="true" aria-label="Shopping cart">
         <div class="cart-header">
             <h2>Your Cart</h2>
             <button class="cart-close">&times;</button>
@@ -84,7 +84,7 @@
     </aside>
 
     <div class="pickup-overlay" onclick="closePickupModal()"></div>
-    <div class="pickup-modal">
+    <div class="pickup-modal" role="dialog" aria-modal="true" aria-label="Local Pickup">
         <div class="pickup-content">
             <button class="pickup-close" onclick="closePickupModal()">&times;</button>
             <h2>Local Pickup</h2>
@@ -102,7 +102,7 @@
         <div class="product-container" id="productContainer">
             <div class="loading-spinner"><div class="spinner"></div><p>Loading product...</p></div>
         </div>
-        <section class="reviews-section" id="reviewsSection" style="display:none">
+        <section class="reviews-section" id="reviewsSection" style="display:none" data-reveal>
             <div class="reviews-container">
                 <div class="reviews-summary" id="reviewsSummary"></div>
                 <div class="reviews-list" id="reviewsList"></div>
@@ -373,28 +373,35 @@
 
         function updateVariant() {
             const select = document.getElementById('variantSelect');
+            if (!select) return;
             const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption) return;
             const price = parseFloat(selectedOption.dataset.price);
-            document.getElementById('productPrice').innerHTML = salePriceHtml(price);
+            const priceEl = document.getElementById('productPrice');
+            if (priceEl) priceEl.innerHTML = salePriceHtml(price);
         }
 
         function getSelectedVariationId() {
+            if (!currentProduct) return null;
             const select = document.getElementById('variantSelect');
             return select ? select.value : currentProduct.variationId;
         }
 
         async function handleBuyNow() {
             if (!currentProduct) return;
+            const varId = getSelectedVariationId();
+            if (!varId) return;
             const btn = document.querySelector('.buy-now-btn');
-            btn.textContent = 'Processing...';
-            btn.disabled = true;
-            await buyNow(getSelectedVariationId());
-            btn.textContent = 'Buy Now';
-            btn.disabled = false;
+            if (btn) { btn.textContent = 'Processing...'; btn.disabled = true; }
+            await buyNow(varId);
+            if (btn) { btn.textContent = 'Buy Now'; btn.disabled = false; }
         }
 
         function handleAddToCart() {
-            const selectedVariation = currentProduct.variations?.find(v => v.id === getSelectedVariationId());
+            if (!currentProduct) return;
+            const varId = getSelectedVariationId();
+            if (!varId) return;
+            const selectedVariation = currentProduct.variations?.find(v => v.id === varId);
             if (selectedVariation) {
                 addToCart(currentProduct.id, selectedVariation.id, selectedVariation.name, selectedVariation.price);
             } else {
@@ -554,7 +561,7 @@
                         <span class="review-date">${new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                     ${r.text ? `<p class="review-text">${escapeHtml(r.text)}</p>` : ''}
-                    ${r.image ? `<div class="review-image-display"><img src="${r.image}" alt="Review photo" loading="lazy"></div>` : ''}
+                    ${r.image && safeImageUrl(r.image) ? `<div class="review-image-display"><img src="${escapeAttr(safeImageUrl(r.image))}" alt="Review photo" loading="lazy"></div>` : ''}
                 </div>
             `;
         }

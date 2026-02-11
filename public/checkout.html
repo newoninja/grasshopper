@@ -31,7 +31,7 @@
     </nav>
 
     <div class="mobile-menu-overlay"></div>
-    <div class="mobile-menu">
+    <div class="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <button class="mobile-menu-close" aria-label="Close menu">&times;</button>
         <a href="index.html" class="mobile-menu-link">Home</a>
         <a href="shop.html" class="mobile-menu-link">Shop</a>
@@ -45,7 +45,7 @@
 
             <div class="checkout-layout">
                 <!-- Order Summary -->
-                <div class="checkout-summary">
+                <div class="checkout-summary" data-reveal>
                     <h2 class="checkout-section-title">Order Summary</h2>
                     <div class="checkout-items" id="checkoutItems">
                         <div class="loading-spinner"><div class="spinner"></div></div>
@@ -86,7 +86,7 @@
                 </div>
 
                 <!-- Payment Section -->
-                <div class="checkout-payment">
+                <div class="checkout-payment" data-reveal data-reveal-delay="0.1s">
                     <!-- Shipping Address (hidden for pickup) -->
                     <div id="addressSection">
                         <h2 class="checkout-section-title">Shipping Address</h2>
@@ -167,7 +167,7 @@
                         </span>
                     </button>
 
-                    <div id="paymentErrors" class="checkout-errors" style="display: none;"></div>
+                    <div id="paymentErrors" class="checkout-errors"></div>
 
                     <div class="checkout-secure-note">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

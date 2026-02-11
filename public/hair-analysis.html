@@ -46,7 +46,7 @@
     </nav>
 
     <div class="mobile-menu-overlay"></div>
-    <div class="mobile-menu">
+    <div class="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
         <button class="mobile-menu-close">&times;</button>
         <a href="index.html" class="mobile-menu-link">Home</a>
         <a href="shop.html" class="mobile-menu-link">Shop</a>
@@ -55,7 +55,7 @@
         <a href="https://www.instagram.com/dyette_grasshopper/" target="_blank" rel="noopener noreferrer" class="mobile-menu-link">Instagram</a>
     </div>
 
-    <div class="search-overlay">
+    <div class="search-overlay" role="dialog" aria-modal="true" aria-label="Search">
         <div class="search-container">
             <button class="search-close">&times;</button>
             <form class="search-form" onsubmit="handleSearch(event)">
@@ -67,7 +67,7 @@
     </div>
 
     <div class="cart-overlay"></div>
-    <aside class="cart-sidebar">
+    <aside class="cart-sidebar" role="dialog" aria-modal="true" aria-label="Shopping cart">
         <div class="cart-header">
             <h2>Your Cart</h2>
             <button class="cart-close">&times;</button>
@@ -84,7 +84,7 @@
     </aside>
 
     <div class="pickup-overlay" onclick="closePickupModal()"></div>
-    <div class="pickup-modal">
+    <div class="pickup-modal" role="dialog" aria-modal="true" aria-label="Local Pickup">
         <div class="pickup-content">
             <button class="pickup-close" onclick="closePickupModal()">&times;</button>
             <h2>Local Pickup</h2>
@@ -98,13 +98,13 @@
     </div>
 
     <main class="ha-main">
-        <header class="ha-hero">
+        <header class="ha-hero" data-reveal>
             <p class="ha-hero-tag">AI-Powered</p>
             <h1 class="ha-hero-title">Hair Analysis</h1>
             <p class="ha-hero-desc">Upload a photo of your hair and get a professional analysis with personalized product recommendations — powered by AI and D'yette's 32 years of styling expertise.</p>
         </header>
 
-        <section class="ha-upload-section">
+        <section class="ha-upload-section" data-reveal>
             <div class="ha-dropzone" id="dropzone">
                 <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
                 <div class="ha-dropzone-content" id="dropzoneContent">
