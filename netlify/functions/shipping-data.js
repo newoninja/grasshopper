@@ -582,5 +582,57 @@ function getShippingCost(productName, variationName = "Standard") {
   return DEFAULT_SHIPPING * 100; // Default to $7.50 in cents
 }
 
-module.exports = { getShippingCost };
+// UPS Ground zone mapping from Charlotte, NC (28277)
+const stateToZone = {
+  NC: 2, SC: 2,
+  VA: 3, GA: 3, TN: 3, WV: 3, DC: 3,
+  FL: 4, AL: 4, MS: 4, KY: 4, OH: 4, PA: 4, MD: 4, DE: 4, NJ: 4, IN: 4,
+  NY: 5, CT: 5, MA: 5, NH: 5, VT: 5, ME: 5, RI: 5, MI: 5, WI: 5, MN: 5, IL: 5, IA: 5,
+  TX: 6, LA: 6, AR: 6, MO: 6, NE: 6, KS: 6, OK: 6, ND: 6, SD: 6,
+  CO: 7, WY: 7, MT: 7, NM: 7, AZ: 7, UT: 7, ID: 7,
+  CA: 8, OR: 8, WA: 8, NV: 8, HI: 8, AK: 8
+};
+
+// UPS Ground rate table: base + per-lb surcharge by zone (in dollars)
+const upsRates = {
+  2: { base: 8.50, perLb: 0.40 },
+  3: { base: 9.50, perLb: 0.55 },
+  4: { base: 10.50, perLb: 0.70 },
+  5: { base: 11.50, perLb: 0.85 },
+  6: { base: 12.50, perLb: 1.00 },
+  7: { base: 14.00, perLb: 1.15 },
+  8: { base: 15.50, perLb: 1.30 }
+};
+
+// Estimate product weight (lbs) from its flat-rate shipping cost
+function estimateWeight(shippingCostDollars) {
+  if (shippingCostDollars <= 5.5) return 0.5;
+  if (shippingCostDollars <= 6.5) return 0.75;
+  if (shippingCostDollars <= 7.5) return 1.0;
+  if (shippingCostDollars <= 8.5) return 1.5;
+  if (shippingCostDollars <= 9.0) return 2.0;
+  if (shippingCostDollars <= 9.5) return 2.5;
+  if (shippingCostDollars <= 11.0) return 3.0;
+  if (shippingCostDollars <= 14.5) return 4.0;
+  return 6.0;
+}
+
+// Get product weight in lbs
+function getProductWeight(productName, variationName = "Standard") {
+  const product = shippingCosts[productName];
+  const costDollars = (product && product[variationName] !== undefined)
+    ? product[variationName]
+    : DEFAULT_SHIPPING;
+  return estimateWeight(costDollars);
+}
+
+// Calculate UPS Ground shipping cost for a total weight to a destination state
+function getUpsShippingCost(totalWeightLbs, destinationState) {
+  const zone = stateToZone[destinationState] || 5; // default to zone 5
+  const rate = upsRates[zone];
+  const cost = rate.base + (rate.perLb * totalWeightLbs);
+  return Math.round(cost * 100); // return in cents
+}
+
+module.exports = { getShippingCost, getProductWeight, getUpsShippingCost };
 

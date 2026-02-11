@@ -8,6 +8,7 @@ let applePay = null;
 let googlePay = null;
 let checkoutData = null;
 let discountCents = 0;
+let productDiscountCents = 0; // product-only discount for tax calculation
 const NC_TAX_RATE = 0.0725;
 let appliedPromo = null;
 
@@ -34,9 +35,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderOrderSummary(checkoutData);
 
-    // Calculate shipping if not pickup
+    // Calculate shipping if not pickup — wait for address state
     if (mode !== 'pickup') {
-        await calculateShipping(checkoutData.items);
+        document.getElementById('checkoutShipping').textContent = 'Enter address';
+        document.getElementById('checkoutShipping').dataset.cents = '0';
+        updateTotal();
+
+        // Recalculate shipping when state changes
+        const stateSelect = document.getElementById('addrState');
+        if (stateSelect) {
+            stateSelect.addEventListener('change', async () => {
+                if (stateSelect.value) {
+                    await calculateShipping(checkoutData.items, stateSelect.value);
+                }
+            });
+        }
     } else {
         document.getElementById('checkoutShipping').textContent = '$0.00 (Pickup)';
         updateTotal();
@@ -170,7 +183,13 @@ function syncCartToStorage() {
 
 async function recalcAndUpdateTotal() {
     if (checkoutData.mode !== 'pickup') {
-        await calculateShipping(checkoutData.items);
+        const stateSelect = document.getElementById('addrState');
+        const state = stateSelect?.value || null;
+        if (state) {
+            await calculateShipping(checkoutData.items, state);
+        } else {
+            updateTotal();
+        }
     } else {
         updateTotal();
     }
@@ -208,18 +227,20 @@ async function applyPromo() {
 
         if (data.valid) {
             appliedPromo = data;
-            // Calculate discount off the total (subtotal + shipping)
+            // Calculate discount on subtotal (not shipping)
             const subtotal = checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
             const shippingEl = document.getElementById('checkoutShipping');
             const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
-            const totalBeforeDiscount = Math.round(subtotal * 100) + shippingCents;
-
+            const subtotalCents = Math.round(subtotal * 100);
             if (data.freeShipping) {
                 discountCents = shippingCents;
+                productDiscountCents = 0;
             } else if (data.type === 'percent') {
-                discountCents = Math.round(totalBeforeDiscount * data.value / 100);
+                discountCents = Math.round(subtotalCents * data.value / 100);
+                productDiscountCents = discountCents;
             } else {
-                discountCents = data.value;
+                discountCents = Math.min(data.value, subtotalCents);
+                productDiscountCents = discountCents;
             }
 
             const discountLine = document.getElementById('discountLine');
@@ -229,8 +250,8 @@ async function applyPromo() {
             msg.textContent = data.message || `Code "${code}" applied!`;
             msg.className = 'promo-message promo-success';
             input.disabled = true;
-            document.getElementById('promoApplyBtn').textContent = 'Applied';
-            document.getElementById('promoApplyBtn').disabled = true;
+            document.getElementById('promoApplyBtn').style.display = 'none';
+            document.getElementById('promoRemoveBtn').style.display = '';
 
             updateTotal();
         } else {
@@ -243,23 +264,48 @@ async function applyPromo() {
     }
 }
 
+function removePromo() {
+    discountCents = 0;
+    productDiscountCents = 0;
+    appliedPromo = null;
+
+    const input = document.getElementById('promoInput');
+    input.value = '';
+    input.disabled = false;
+
+    document.getElementById('promoApplyBtn').style.display = '';
+    document.getElementById('promoRemoveBtn').style.display = 'none';
+    document.getElementById('discountLine').style.display = 'none';
+    document.getElementById('checkoutDiscount').textContent = '-$0.00';
+
+    const msg = document.getElementById('promoMessage');
+    msg.textContent = '';
+    msg.className = 'promo-message';
+
+    updateTotal();
+}
+
 // ============================================
 // Shipping Calculation
 // ============================================
 
-async function calculateShipping(items) {
+async function calculateShipping(items, destinationState) {
     const shippingEl = document.getElementById('checkoutShipping');
+    shippingEl.textContent = 'Calculating...';
 
     try {
+        const body = {
+            items: items.map(item => ({
+                variationId: item.variationId,
+                quantity: item.quantity || 1
+            }))
+        };
+        if (destinationState) body.destinationState = destinationState;
+
         const response = await fetch('/api/calculate-shipping', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                items: items.map(item => ({
-                    variationId: item.variationId,
-                    quantity: item.quantity || 1
-                }))
-            })
+            body: JSON.stringify(body)
         });
 
         const data = await response.json();
@@ -283,7 +329,7 @@ function updateTotal() {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const taxableAmount = Math.max(0, subtotalCents - discountCents);
+    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
     const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = Math.max(0, totalCents) / 100;
@@ -402,7 +448,7 @@ function buildPaymentRequest(data) {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    const taxableAmount = Math.max(0, subtotalCents - discountCents);
+    const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
     const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
     const total = (Math.max(0, totalCents) / 100).toFixed(2);
@@ -489,9 +535,9 @@ async function processPayment(sourceId) {
             body.shippingAddress = address;
         }
 
-        // Add tax
+        // Add tax (only product discounts reduce taxable amount, not shipping discounts)
         const subtotalCents = Math.round(checkoutData.items.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0) * 100);
-        const taxableAmount = Math.max(0, subtotalCents - discountCents);
+        const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
         body.taxCents = Math.round(taxableAmount * NC_TAX_RATE);
 
         if (appliedPromo) {

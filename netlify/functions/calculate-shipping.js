@@ -1,6 +1,6 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
-const { getShippingCost } = require('./shipping-data');
+const { getShippingCost, getProductWeight, getUpsShippingCost } = require('./shipping-data');
 
 exports.handler = async (event) => {
     const headers = {
@@ -18,13 +18,13 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { items } = JSON.parse(event.body);
+        const { items, destinationState } = JSON.parse(event.body);
 
         if (!items || !items.length) {
             return { statusCode: 400, headers, body: JSON.stringify({ error: 'No items provided' }) };
         }
 
-        let totalShipping = 0;
+        let totalWeight = 0;
 
         for (const item of items) {
             try {
@@ -55,27 +55,38 @@ exports.handler = async (event) => {
                         if (itemResponse.ok) {
                             const itemData = await itemResponse.json();
                             const productName = itemData.object?.item_data?.name || '';
-                            const shippingPerUnit = getShippingCost(productName, variationName);
-                            totalShipping += shippingPerUnit * (item.quantity || 1);
+                            totalWeight += getProductWeight(productName, variationName) * (item.quantity || 1);
                         } else {
-                            totalShipping += 750 * (item.quantity || 1);
+                            totalWeight += 1.5 * (item.quantity || 1); // fallback weight
                         }
                     } else {
-                        totalShipping += 750 * (item.quantity || 1);
+                        totalWeight += 1.5 * (item.quantity || 1);
                     }
                 } else {
-                    totalShipping += 750 * (item.quantity || 1);
+                    totalWeight += 1.5 * (item.quantity || 1);
                 }
             } catch (err) {
                 console.error('Error fetching product for shipping:', err);
-                totalShipping += 750 * (item.quantity || 1);
+                totalWeight += 1.5 * (item.quantity || 1);
             }
         }
 
+        // If destination state provided, use UPS zone-based pricing
+        if (destinationState) {
+            const shippingAmount = getUpsShippingCost(totalWeight, destinationState.toUpperCase());
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ shippingAmount, totalWeight: Math.round(totalWeight * 10) / 10 })
+            };
+        }
+
+        // Fallback: estimate for zone 5 (mid-range)
+        const shippingAmount = getUpsShippingCost(totalWeight, 'NY');
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ shippingAmount: totalShipping })
+            body: JSON.stringify({ shippingAmount, totalWeight: Math.round(totalWeight * 10) / 10 })
         };
     } catch (error) {
         console.error('Calculate shipping error:', error);

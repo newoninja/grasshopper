@@ -1,7 +1,7 @@
 const SQUARE_ACCESS_TOKEN = process.env.SQUARE_ACCESS_TOKEN;
 const SQUARE_BASE_URL = 'https://connect.squareup.com/v2';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const { getShippingCost } = require('./shipping-data');
+const { getShippingCost, getProductWeight, getUpsShippingCost } = require('./shipping-data');
 
 exports.handler = async (event) => {
     const headers = {
@@ -49,9 +49,10 @@ exports.handler = async (event) => {
             item_type: 'ITEM'
         }));
 
-        // Calculate shipping for non-pickup orders
+        // Calculate shipping for non-pickup orders using UPS zone-based rates
         let shippingAmount = 0;
         if (orderType !== 'pickup') {
+            let totalWeight = 0;
             for (const item of items) {
                 try {
                     const productResponse = await fetch(`${SQUARE_BASE_URL}/catalog/object/${item.variationId}`, {
@@ -81,21 +82,24 @@ exports.handler = async (event) => {
                             if (itemResponse.ok) {
                                 const itemData = await itemResponse.json();
                                 const productName = itemData.object?.item_data?.name || '';
-                                shippingAmount += getShippingCost(productName, variationName) * (item.quantity || 1);
+                                totalWeight += getProductWeight(productName, variationName) * (item.quantity || 1);
                             } else {
-                                shippingAmount += 750 * (item.quantity || 1);
+                                totalWeight += 1.5 * (item.quantity || 1);
                             }
                         } else {
-                            shippingAmount += 750 * (item.quantity || 1);
+                            totalWeight += 1.5 * (item.quantity || 1);
                         }
                     } else {
-                        shippingAmount += 750 * (item.quantity || 1);
+                        totalWeight += 1.5 * (item.quantity || 1);
                     }
                 } catch (err) {
                     console.error('Error fetching product for shipping:', err);
-                    shippingAmount += 750 * (item.quantity || 1);
+                    totalWeight += 1.5 * (item.quantity || 1);
                 }
             }
+
+            const destState = shippingAddress?.state || 'NY';
+            shippingAmount = getUpsShippingCost(totalWeight, destState);
         }
 
         // Build order body
