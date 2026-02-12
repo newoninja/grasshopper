@@ -53,6 +53,8 @@ function safeProductHref(productId) {
 
 function safeImageUrl(url) {
     if (!url) return '';
+    // Allow base64 data URLs for review images (validated on upload)
+    if (/^data:image\/(png|jpe?g|gif|webp);base64,/.test(url)) return url;
     try {
         const parsed = new URL(url, window.location.origin);
         if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
