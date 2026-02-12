@@ -168,7 +168,20 @@ exports.handler = async (event) => {
       }];
     }
 
+    if (orderType === 'pickup' && phone) {
+      orderBody.metadata = { pickup_phone: safeString(phone, 20) };
+    }
+
     if (shippingAddress && orderType !== 'pickup') {
+      const addrParts = [
+        `Ship to: ${safeString(shippingAddress.firstName, 60)} ${safeString(shippingAddress.lastName, 60)}`.trim(),
+        safeString(shippingAddress.street, 120),
+        safeString(shippingAddress.apt, 120),
+        `${safeString(shippingAddress.city, 80)}, ${safeString(shippingAddress.state, 2).toUpperCase()} ${safeString(shippingAddress.zip, 10)}`,
+        safeString(shippingAddress.email, 160)
+      ].filter(Boolean);
+      orderBody.note = addrParts.join(' | ');
+
       orderBody.fulfillments = [{
         type: 'SHIPMENT',
         state: 'PROPOSED',
