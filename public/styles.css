@@ -2786,13 +2786,22 @@ body.mens-mode .ha-rec-reason {
 .success-receipt-link {
     display: inline-block;
     margin-top: 1rem;
+    padding: 0.85rem 2.5rem;
     font-size: 0.875rem;
-    color: var(--lavender-deep);
-    font-weight: 500;
-    transition: color var(--duration-fast);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-900);
+    background: transparent;
+    border: 2px solid var(--gray-900);
+    border-radius: 60px;
+    text-decoration: none;
+    transition: all var(--duration-fast);
 }
 .success-receipt-link:hover {
-    text-decoration: underline;
+    background: var(--gray-900);
+    color: white;
+    transform: translateY(-2px);
 }
 
 /* Error State */
