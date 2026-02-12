@@ -3,3 +3,6 @@ node_modules/
 .env
 .claude/
 *.key
+
+# Local Netlify folder
+.netlify

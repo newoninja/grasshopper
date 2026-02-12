@@ -224,22 +224,28 @@ function createProductCard(product, fullSize = false) {
         ? salePriceRangeHtml(product.priceRange.min, product.priceRange.max)
         : salePriceHtml(product.price);
 
+    const brandLabel = product.brand
+        ? `<p class="product-brand-label">${escapeHtml(product.brand)}</p>`
+        : '';
+
     return `
         <article class="product-card${fullSize ? ' full-size' : ''}" data-product-id="${product.id}">
             <a href="${productHref}" class="product-image-link">
                 <div class="product-image">
                     ${SALE_ACTIVE ? `<span class="sale-badge">${SALE_LABEL}</span>` : ''}
                     ${imageHtml}
+                    <button class="quick-view-btn" onclick="event.preventDefault(); event.stopPropagation(); openQuickView('${product.id}')">Quick View</button>
                 </div>
             </a>
             <div class="product-info">
+                ${brandLabel}
                 <a href="${productHref}" class="product-name-link">
                     <h3 class="product-name">${escapeHtml(product.name)}</h3>
                 </a>
                 <p class="product-price">${priceHtml}</p>
                 <div class="product-review-stars" data-review-id="${product.id}"></div>
                 <div class="product-buttons">
-                    <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add</button>
+                    <button class="add-to-cart-btn" onclick="event.stopPropagation(); addToCart('${product.id}')">Add to Cart</button>
                     <button class="buy-now-btn-small" onclick="event.stopPropagation(); buyNow('${product.variationId}')">Buy Now</button>
                 </div>
             </div>
@@ -321,12 +327,16 @@ function saveCart() {
     localStorage.setItem('grasshopper-cart', JSON.stringify(cart));
 }
 
+const FREE_SHIPPING_THRESHOLD = 75;
+
 function updateCartUI() {
     const cartItems = document.getElementById('cartItems');
     const cartTotal = document.getElementById('cartTotal');
     const cartShipping = document.getElementById('cartShipping');
     const cartCount = document.querySelector('.cart-count');
     const checkoutBtn = document.getElementById('checkoutBtn');
+    const pickupCheckBtn = document.getElementById('pickupCheckBtn');
+    const shippingProgress = document.getElementById('shippingProgressBar');
 
     if (!cartItems) return;
 
@@ -339,7 +349,6 @@ function updateCartUI() {
         cartCount.classList.toggle('visible', totalItems > 0);
         if (totalItems > prevCount) {
             cartCount.classList.remove('bump');
-            // Force reflow to restart animation
             void cartCount.offsetWidth;
             cartCount.classList.add('bump');
         }
@@ -348,9 +357,49 @@ function updateCartUI() {
     if (cartShipping) cartShipping.textContent = totalItems > 0 ? 'Calculated at checkout' : '$0.00';
     if (cartTotal) cartTotal.textContent = `$${Math.round(subtotal)}`;
     if (checkoutBtn) checkoutBtn.disabled = cart.length === 0;
+    if (pickupCheckBtn) pickupCheckBtn.style.display = cart.length === 0 ? 'none' : '';
+
+    // Free shipping progress bar
+    if (shippingProgress) {
+        if (cart.length === 0) {
+            shippingProgress.style.display = 'none';
+        } else {
+            shippingProgress.style.display = '';
+            const pct = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+            const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+            const textEl = shippingProgress.querySelector('.shipping-progress-text');
+            const fillEl = shippingProgress.querySelector('.shipping-progress-fill');
+            if (remaining > 0) {
+                textEl.className = 'shipping-progress-text';
+                textEl.innerHTML = `<strong>$${Math.ceil(remaining)}</strong> away from free shipping`;
+                fillEl.className = 'shipping-progress-fill';
+                fillEl.style.width = `${pct}%`;
+            } else {
+                textEl.className = 'shipping-progress-text earned';
+                textEl.innerHTML = '🎉 You qualify for <strong>free shipping!</strong>';
+                fillEl.className = 'shipping-progress-fill complete';
+                fillEl.style.width = '100%';
+                // Celebrate on first qualify
+                if (!shippingProgress.dataset.celebrated) {
+                    shippingProgress.dataset.celebrated = 'true';
+                    shippingProgress.classList.add('shipping-progress-celebrate');
+                    setTimeout(() => shippingProgress.classList.remove('shipping-progress-celebrate'), 500);
+                }
+            }
+            // Reset celebrated if dropped below
+            if (remaining > 0) shippingProgress.dataset.celebrated = '';
+        }
+    }
 
     if (cart.length === 0) {
-        cartItems.innerHTML = '<p class="cart-empty">Your cart is empty</p>';
+        cartItems.innerHTML = `
+            <div class="cart-empty-state">
+                <div class="cart-empty-icon">🛍</div>
+                <h3 class="cart-empty-title">Your cart is empty</h3>
+                <p class="cart-empty-text">Browse our collection and find something you'll love.</p>
+                <a href="shop.html" class="cart-empty-cta" onclick="closeCart()">Shop Now</a>
+            </div>
+        `;
         return;
     }
 
@@ -448,6 +497,99 @@ async function executeSearch(query, resultsContainer) {
 function goToProduct(productId) {
     closeSearch();
     window.location.href = `product.html?id=${productId}`;
+}
+
+// ============================================
+// Quick View Modal
+// ============================================
+
+function openQuickView(productId) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+
+    let overlay = document.getElementById('quickviewOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'quickviewOverlay';
+        overlay.className = 'quickview-overlay';
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeQuickView();
+        });
+        overlay.innerHTML = `
+            <div class="quickview-modal">
+                <button class="quickview-close" onclick="closeQuickView()">&times;</button>
+                <div class="quickview-image" id="qvImage"></div>
+                <div class="quickview-details" id="qvDetails"></div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    const imageUrl = safeImageUrl(product.imageUrl);
+    document.getElementById('qvImage').innerHTML = imageUrl
+        ? `<img src="${escapeAttr(imageUrl)}" alt="${escapeAttr(product.name)}">`
+        : '<div class="product-image-placeholder">No Image</div>';
+
+    const hasVariants = product.variations && product.variations.length > 1;
+    const priceHtml = product.priceRange
+        ? salePriceRangeHtml(product.priceRange.min, product.priceRange.max)
+        : salePriceHtml(product.price);
+
+    const variantHtml = hasVariants ? `
+        <div class="quickview-variants">
+            <label for="qvVariantSelect">Size / Option</label>
+            <select id="qvVariantSelect" onchange="updateQuickViewPrice()">
+                ${product.variations.map(v => `<option value="${v.id}" data-price="${v.price}">${escapeHtml(v.name)} — $${salePrice(v.price)}</option>`).join('')}
+            </select>
+        </div>
+    ` : '';
+
+    document.getElementById('qvDetails').innerHTML = `
+        <p class="quickview-brand">${escapeHtml(product.brand || '')}</p>
+        <h2 class="quickview-name">${escapeHtml(product.name)}</h2>
+        <p class="quickview-price" id="qvPrice">${priceHtml}</p>
+        ${variantHtml}
+        <div class="quickview-actions">
+            <button class="quickview-add-btn" onclick="quickViewAddToCart('${product.id}')">Add to Cart</button>
+            <a href="${safeProductHref(product.id)}" class="quickview-view-btn">View Details</a>
+        </div>
+    `;
+
+    overlay.dataset.productId = productId;
+    requestAnimationFrame(() => overlay.classList.add('active'));
+    document.body.style.overflow = 'hidden';
+}
+
+function closeQuickView() {
+    const overlay = document.getElementById('quickviewOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function updateQuickViewPrice() {
+    const select = document.getElementById('qvVariantSelect');
+    if (!select) return;
+    const price = parseFloat(select.options[select.selectedIndex]?.dataset.price || 0);
+    const priceEl = document.getElementById('qvPrice');
+    if (priceEl) priceEl.innerHTML = salePriceHtml(price);
+}
+
+function quickViewAddToCart(productId) {
+    const select = document.getElementById('qvVariantSelect');
+    if (select) {
+        const option = select.options[select.selectedIndex];
+        const product = allProducts.find(p => p.id === productId);
+        if (product) {
+            const variation = product.variations?.find(v => v.id === option.value);
+            addToCart(productId, option.value, variation?.name, parseFloat(option.dataset.price));
+        }
+    } else {
+        addToCart(productId);
+    }
+    closeQuickView();
+    openCart();
 }
 
 // ============================================
