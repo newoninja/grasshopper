@@ -292,15 +292,12 @@ async function applyPromo() {
             const subtotalCents = Math.round(subtotal * 100);
             if (data.freeShipping) {
                 discountCents = shippingCents;
-                productDiscountCents = 0;
             } else if (data.type === 'percent') {
-                productDiscountCents = Math.round(subtotalCents * data.value / 100);
                 discountCents = Math.round((subtotalCents + shippingCents) * data.value / 100);
             } else {
-                // Fixed amount: apply to products first, then shipping
-                productDiscountCents = Math.min(data.value, subtotalCents);
                 discountCents = Math.min(data.value, subtotalCents + shippingCents);
             }
+            productDiscountCents = 0;
 
             const discountLine = document.getElementById('discountLine');
             discountLine.style.display = 'flex';
