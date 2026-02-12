@@ -156,7 +156,6 @@ function computeDiscountCents({ promoResponse, subtotalCents, shippingCents }) {
   discountSummary.code = serverPromo.code;
   discountSummary.freeShipping = !!serverPromo.freeShipping;
 
-  const taxDeductible = serverPromo.code === 'WHYNOT';
   if (serverPromo.freeShipping) {
     discountSummary.discountCents = normalizedShipping;
     discountSummary.productDiscountCents = 0;
@@ -165,17 +164,13 @@ function computeDiscountCents({ promoResponse, subtotalCents, shippingCents }) {
 
   if (serverPromo.type === 'percent') {
     discountSummary.discountCents = Math.round((normalizedSubtotal + normalizedShipping) * (serverPromo.value / 100));
-    discountSummary.productDiscountCents = taxDeductible
-      ? Math.round(normalizedSubtotal * (serverPromo.value / 100))
-      : 0;
+    discountSummary.productDiscountCents = Math.round(normalizedSubtotal * (serverPromo.value / 100));
     return discountSummary;
   }
 
   const fixedAmount = Math.max(0, Math.round(serverPromo.value || 0));
   discountSummary.discountCents = Math.min(fixedAmount, normalizedSubtotal + normalizedShipping);
-  discountSummary.productDiscountCents = taxDeductible
-    ? Math.min(fixedAmount, normalizedSubtotal)
-    : 0;
+  discountSummary.productDiscountCents = Math.min(fixedAmount, normalizedSubtotal);
   return discountSummary;
 }
 

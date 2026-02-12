@@ -290,18 +290,15 @@ async function applyPromo() {
             const shippingEl = document.getElementById('checkoutShipping');
             const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
             const subtotalCents = Math.round(subtotal * 100);
-            // Only "WHYNOT" promo code gets tax deductions
-            const taxDeductible = code === 'WHYNOT';
-
             if (data.freeShipping) {
                 discountCents = shippingCents;
                 productDiscountCents = 0;
             } else if (data.type === 'percent') {
-                productDiscountCents = taxDeductible ? Math.round(subtotalCents * data.value / 100) : 0;
+                productDiscountCents = Math.round(subtotalCents * data.value / 100);
                 discountCents = Math.round((subtotalCents + shippingCents) * data.value / 100);
             } else {
                 // Fixed amount: apply to products first, then shipping
-                productDiscountCents = taxDeductible ? Math.min(data.value, subtotalCents) : 0;
+                productDiscountCents = Math.min(data.value, subtotalCents);
                 discountCents = Math.min(data.value, subtotalCents + shippingCents);
             }
 
@@ -409,7 +406,6 @@ function getOrderMath() {
     const shippingEl = document.getElementById('checkoutShipping');
     const shippingCents = parseInt(shippingEl.dataset.cents || '0', 10);
     const subtotalCents = Math.round(subtotal * 100);
-    // Only "WHYNOT" promo reduces taxable amount; all others tax on full subtotal
     const taxableAmount = Math.max(0, subtotalCents - productDiscountCents);
     const taxCents = Math.round(taxableAmount * NC_TAX_RATE);
     const totalCents = subtotalCents + shippingCents + taxCents - discountCents;
